@@ -1,9 +1,11 @@
-
 import { ArrowRight, Play, Shield, Zap, MessageSquare, CloudLightning, Globe, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -17,8 +19,8 @@ const Index = () => {
               <a href="#testimonials" className="text-sm text-gray-600 hover:text-gray-900">Testimonials</a>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" className="text-sm">Sign In</Button>
-              <Button className="text-sm">Get Started</Button>
+              <Button variant="ghost" className="text-sm" onClick={() => navigate("/signin")}>Sign In</Button>
+              <Button className="text-sm" onClick={() => navigate("/signup")}>Get Started</Button>
             </div>
           </div>
         </div>
