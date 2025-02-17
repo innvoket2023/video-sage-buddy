@@ -5,9 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Send, Play, Film } from "lucide-react";
 
+// Define the message type
+type Message = {
+  type: "bot" | "user";
+  content: string;
+  timestamp?: string; // Make timestamp optional
+};
+
 const ChatbotPage = () => {
-  const [messages, setMessages] = useState([
-    { type: "bot", content: "Hello! I'm ready to help you analyze your videos. What would you like to know?" },
+  const [messages, setMessages] = useState<Message[]>([
+    { 
+      type: "bot", 
+      content: "Hello! I'm ready to help you analyze your videos. What would you like to know?" 
+    },
   ]);
   const [input, setInput] = useState("");
 
