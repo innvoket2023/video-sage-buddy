@@ -1,11 +1,14 @@
-
+import { useState, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload, Search, Filter, MoreVertical } from "lucide-react";
+import axios from "axios";
+import VideoUploadDialog from "@/components/VideoUploadDialog";
 
 const VideoLibrary = () => {
-  const videos = [
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [videos, setVideos] = useState([
     {
       id: 1,
       title: "Marketing Presentation",
@@ -30,7 +33,44 @@ const VideoLibrary = () => {
       date: "2024-02-13",
       status: "Processed",
     },
-  ];
+  ]);
+
+  // Fetch videos from the backend
+  const fetchVideos = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/videos");
+      // Map the video names to the expected format with placeholder data
+      const fetchedVideos = response.data.videos.map((videoName, index) => ({
+        id: videos.length + index + 1,
+        title: videoName,
+        thumbnail: "/placeholder.svg",
+        duration: "00:00", // Placeholder duration
+        date: new Date().toISOString().split('T')[0], // Today's date
+        status: "Processed",
+      }));
+      
+      // Combine existing videos with new ones
+      setVideos(prevVideos => {
+        // Filter out any duplicates based on title
+        const existingTitles = new Set(prevVideos.map(v => v.title));
+        const newVideos = fetchedVideos.filter(v => !existingTitles.has(v.title));
+        return [...prevVideos, ...newVideos];
+      });
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+    }
+  };
+
+  // Open the upload dialog when the upload button is clicked
+  const handleUploadClick = () => {
+    setUploadDialogOpen(true);
+  };
+
+  // Handle when the upload dialog is closed
+  const handleUploadComplete = () => {
+    // Refresh the video list after a successful upload
+    fetchVideos();
+  };
 
   return (
     <DashboardLayout>
@@ -40,10 +80,13 @@ const VideoLibrary = () => {
             <h1 className="text-2xl font-bold">Video Library</h1>
             <p className="text-gray-600">Manage and analyze your videos</p>
           </div>
-          <Button>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Video
-          </Button>
+          <div>
+            {/* Upload button that opens the dialog */}
+            <Button onClick={handleUploadClick}>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Video
+            </Button>
+          </div>
         </div>
 
         {/* Search and Filter */}
@@ -100,6 +143,18 @@ const VideoLibrary = () => {
           ))}
         </div>
       </div>
+
+      {/* Video Upload Dialog */}
+      <VideoUploadDialog 
+        open={uploadDialogOpen} 
+        setOpen={(isOpen) => {
+          setUploadDialogOpen(isOpen);
+          if (!isOpen) {
+            // Refresh videos when dialog closes
+            handleUploadComplete();
+          }
+        }} 
+      />
     </DashboardLayout>
   );
 };
