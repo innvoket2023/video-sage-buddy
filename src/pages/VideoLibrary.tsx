@@ -1,10 +1,13 @@
-
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload, Search, Filter, MoreVertical } from "lucide-react";
+import { useState } from "react";
+import VideoUploadDialog from "./VideoUploadDialog";
 
 const VideoLibrary = () => {
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+
   const videos = [
     {
       id: 1,
@@ -40,10 +43,14 @@ const VideoLibrary = () => {
             <h1 className="text-2xl font-bold">Video Library</h1>
             <p className="text-gray-600">Manage and analyze your videos</p>
           </div>
-          <Button>
+          <Button onClick={() => setUploadDialogOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Upload Video
           </Button>
+          <VideoUploadDialog
+            open={uploadDialogOpen}
+            setOpen={setUploadDialogOpen}
+          />
         </div>
 
         {/* Search and Filter */}
@@ -65,7 +72,10 @@ const VideoLibrary = () => {
         {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {videos.map((video) => (
-            <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card
+              key={video.id}
+              className="overflow-hidden hover:shadow-lg transition-shadow"
+            >
               <div className="aspect-video bg-gray-100 relative">
                 <img
                   src={video.thumbnail}
@@ -87,11 +97,13 @@ const VideoLibrary = () => {
                   </Button>
                 </div>
                 <div className="mt-2">
-                  <span className={`text-sm px-2 py-1 rounded ${
-                    video.status === "Processed" 
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}>
+                  <span
+                    className={`text-sm px-2 py-1 rounded ${
+                      video.status === "Processed"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
                     {video.status}
                   </span>
                 </div>
