@@ -101,7 +101,7 @@ const ChatbotPage = () => {
 
     try {
       // Query the backend with the selected video name
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/query`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/query`, {
         params: {
           query: input,
           video_name: selectedVideo
