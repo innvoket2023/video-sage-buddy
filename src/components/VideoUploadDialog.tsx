@@ -61,12 +61,12 @@ const VideoUploadDialog = ({ open, setOpen }) => {
       formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
       formData.append("resource_type", "video");
 
-      // Add title and description to the same FormData if provided
-      if (title.trim()) {
-        formData.append("title", title.trim());
-      }
+      // Use filename as title if title is not provided
+      const videoTitle = title.trim() || selectedFile.name;
+      formData.append("public_id", videoTitle); // Use title or filename as the public_id
+      
       if (description.trim()) {
-        formData.append("description", description.trim());
+        formData.append("context", `description=${description.trim()}`);
       }
 
       // Upload to Cloudinary with progress tracking
@@ -84,32 +84,45 @@ const VideoUploadDialog = ({ open, setOpen }) => {
 
       setUploadProgress(60);
 
-      // Get the video URL from Cloudinary
+      // Get the video URL and ID from Cloudinary
       const videoUrl = cloudinaryResponse.data.secure_url;
       const publicId = cloudinaryResponse.data.public_id;
 
-      console.log(videoUrl)
+      console.log("Cloudinary upload successful:", videoUrl);
 
-      // Then, send the video URL to our backend for processing
-      const uploadResponse = await axios.post("http://127.0.0.1:5000/upload-and-store", {
+      // Send the video information to our backend for processing
+      // Important: Send as JSON data, not FormData
+      const backendData = {
         video_url: videoUrl,
-        public_id: publicId,
-        formData: formData
-      }, {
+        public_id: videoTitle, // Use the title we set earlier
+        title: videoTitle,
+        description: description.trim()
+      };
 
-        onUploadProgress: (progressEvent) => {
-          // This only tracks the upload of our request, not the processing time
-          const percentCompleted = 60 + Math.round(
-            (progressEvent.loaded * 10) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        },
-      });
+      const uploadResponse = await axios.post(
+        "http://127.0.0.1:5000/upload-and-store", 
+        backendData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          onUploadProgress: (progressEvent) => {
+            // This only tracks the upload of our request, not the processing time
+            const percentCompleted = 60 + Math.round(
+              (progressEvent.loaded * 10) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
 
       setUploadProgress(95);
-      console.log(uploadResponse)
+      console.log("Backend processing result:", uploadResponse.data);
 
-      console.log(uploadResponse.data.transcript);
+      // If backend response includes a transcript
+      if (uploadResponse.data.transcript) {
+        console.log("Video transcript:", uploadResponse.data.transcript);
+      }
 
       setUploadProgress(100);
       setTimeout(() => {
@@ -126,7 +139,7 @@ const VideoUploadDialog = ({ open, setOpen }) => {
       );
       setUploading(false);
     }
-  };;
+  };
 
   const handleCancel = () => {
     if (uploading) return;
@@ -193,11 +206,14 @@ const VideoUploadDialog = ({ open, setOpen }) => {
                   <Label htmlFor="title">Title (Optional)</Label>
                   <Input
                     id="title"
-                    placeholder="Enter video title"
+                    placeholder="Enter video title or leave blank to use filename"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     disabled={uploading}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {title.trim() ? `Using custom title: "${title}"` : `Using filename: "${selectedFile.name}"`}
+                  </p>
                 </div>
 
                 <div>

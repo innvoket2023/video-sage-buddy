@@ -14,10 +14,12 @@ type Message = {
 
 // Define the video type
 type Video = {
-  video_name: string;
-  duration?: string;
-  public_id: string;
+  publicID: string;
   video_url: string;
+  description?: string;
+  transcript?: string;
+  processed?: boolean;
+  index_path?: string;
 };
 
 const ChatbotPage = () => {
@@ -28,20 +30,20 @@ const ChatbotPage = () => {
     },
   ]);
   const [input, setInput] = useState("");
-  const [videos, setVideos] = useState<Video[]>([]); // State to store video names
-  const [selectedVideo, setSelectedVideo] = useState<string>(""); // State to store selected video
+  const [videos, setVideos] = useState<Video[]>([]); // State to store video objects
+  const [selectedVideo, setSelectedVideo] = useState<string>(""); // State to store selected video ID
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Fetch video names when the component mounts
+  // Fetch videos when the component mounts
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/videos");
-
-        console.log("response",response )
-        setVideos(response.data.videos);
+        // Get video list with full details
+        const response = await axios.get("http://localhost:5000/preview");
+        console.log("Videos response:", response.data);
+        setVideos(response.data.videos || []);
       } catch (error) {
         console.error("Error fetching videos:", error);
       }
@@ -53,11 +55,14 @@ const ChatbotPage = () => {
   // Update current video when selection changes
   useEffect(() => {
     if (selectedVideo) {
-      // You can fetch additional video details here if needed
-      setCurrentVideo({
-        name: selectedVideo,
-        duration: "12:34" // This would ideally come from the backend
-      });
+      // Find the selected video in our videos array
+      const videoDetails = videos.find(video => video.publicID === selectedVideo);
+      
+      if (videoDetails) {
+        setCurrentVideo(videoDetails);
+      } else {
+        setCurrentVideo(null);
+      }
 
       // Reset messages when changing videos
       setMessages([
@@ -69,7 +74,7 @@ const ChatbotPage = () => {
     } else {
       setCurrentVideo(null);
     }
-  }, [selectedVideo]);
+  }, [selectedVideo, videos]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +95,8 @@ const ChatbotPage = () => {
     setMessages([...messages, { type: "user", content: input }]);
     // Clear input
     setInput("");
+    
+    setLoading(true);
 
     try {
       // Query the backend with the selected video name
@@ -127,13 +134,30 @@ const ChatbotPage = () => {
           content: "An error occurred while processing your request.",
         },
       ]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handlePlayAtTimestamp = (timestamp: string) => {
-    // This would be implemented to play the video at the specific timestamp
-    console.log(`Playing video at timestamp: ${timestamp}`);
-    // You could integrate with a video player API here
+    if (videoRef.current && timestamp) {
+      // Convert timestamp (like "1:30") to seconds
+      const parts = timestamp.split(':').map(Number);
+      let seconds = 0;
+      
+      // Handle different timestamp formats (HH:MM:SS or MM:SS)
+      if (parts.length === 3) {
+        seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+      } else if (parts.length === 2) {
+        seconds = parts[0] * 60 + parts[1];
+      }
+      
+      // Set video time and play
+      videoRef.current.currentTime = seconds;
+      videoRef.current.play().catch(err => {
+        console.error("Error playing video:", err);
+      });
+    }
   };
 
   return (
@@ -151,14 +175,13 @@ const ChatbotPage = () => {
               onChange={(e) => setSelectedVideo(e.target.value)}
             >
               <option value="">Select a video</option>
-              <option value="all">All Videos</option> {/* Add this line */}
+              <option value="all">All Videos</option>
               {videos.map((video, index) => (
-                <option key={index} value={video}>
-                  {video}
+                <option key={index} value={video.publicID}>
+                  {video.publicID}
                 </option>
               ))}
             </select>
-
           </div>
         </div>
 
@@ -194,6 +217,13 @@ const ChatbotPage = () => {
                     </div>
                   </div>
                 ))}
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[80%] p-4 rounded-lg bg-gray-100">
+                      <p>Thinking...</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Input */}
@@ -209,9 +239,9 @@ const ChatbotPage = () => {
                         : "Please select a video first..."
                     }
                     className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                    disabled={!selectedVideo}
+                    disabled={!selectedVideo || loading}
                   />
-                  <Button type="submit" disabled={!selectedVideo}>
+                  <Button type="submit" disabled={!selectedVideo || loading}>
                     <Send className="h-4 w-4 mr-2" />
                     Send
                   </Button>
@@ -221,19 +251,25 @@ const ChatbotPage = () => {
           </div>
 
           {/* Video Preview */}
-          console.log(video.video);
-          
           <Card className="w-96">
             <div className="aspect-video bg-gray-100 relative">
-              {selectedVideo ? (
-                // <div className="absolute inset-0 flex flex-col items-center justify-center">
-                //   <Film className="h-16 w-16 text-gray-400 mb-2" />
-                //   <p className="text-gray-500 font-medium">Preview not available</p>
-                //   <p className="text-sm text-gray-400">Video loaded and ready for queries</p>
-                // </div>
-                <video ref={videoRef} id="video-preview" key={selectedVideo} controls className="w-full h-full">
-                  <source src={videos.find(video => video.publicId === selectedVideo)?.video_url} type="video/mp4" /></video>
-
+              {selectedVideo && currentVideo?.video_url ? (
+                <video 
+                  ref={videoRef} 
+                  id="video-preview" 
+                  key={selectedVideo} 
+                  controls 
+                  className="w-full h-full"
+                >
+                  <source src={currentVideo.video_url} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              ) : selectedVideo ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <Film className="h-16 w-16 text-gray-400 mb-2" />
+                  <p className="text-gray-500 font-medium">Video loading or unavailable</p>
+                  <p className="text-sm text-gray-400">Selected: {selectedVideo}</p>
+                </div>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <p className="text-gray-400">No video selected</p>
@@ -243,9 +279,9 @@ const ChatbotPage = () => {
             <div className="p-4">
               {currentVideo ? (
                 <>
-                  <h3 className="font-medium">{currentVideo.name}</h3>
-                  {currentVideo.duration && (
-                    <p className="text-sm text-gray-600">{currentVideo.duration} duration</p>
+                  <h3 className="font-medium">{currentVideo.publicID}</h3>
+                  {currentVideo.description && (
+                    <p className="text-sm text-gray-600 mt-1">{currentVideo.description}</p>
                   )}
                 </>
               ) : (
