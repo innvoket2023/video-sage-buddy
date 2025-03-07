@@ -41,7 +41,7 @@ const ChatbotPage = () => {
     const fetchVideos = async () => {
       try {
         // Get video list with full details
-        const response = await axios.get("http://localhost:5000/preview");
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/preview`);
         console.log("Videos response:", response.data);
         setVideos(response.data.videos || []);
       } catch (error) {
@@ -100,10 +100,13 @@ const ChatbotPage = () => {
 
     try {
       // Query the backend with the selected video name
-      const response = await axios.post("http://localhost:5000/query", {
-        query: input,
-        video_name: selectedVideo, // Pass the selected video name
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/query`, {
+        params: {
+          query: input,
+          video_name: selectedVideo
+        }
       });
+      
       const results = response.data.results;
 
       // Add bot response

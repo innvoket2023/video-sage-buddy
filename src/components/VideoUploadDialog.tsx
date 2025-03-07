@@ -64,7 +64,7 @@ const VideoUploadDialog = ({ open, setOpen }) => {
       // Use filename as title if title is not provided
       const videoTitle = title.trim() || selectedFile.name;
       formData.append("public_id", videoTitle); // Use title or filename as the public_id
-      
+
       if (description.trim()) {
         formData.append("context", `description=${description.trim()}`);
       }
@@ -99,8 +99,9 @@ const VideoUploadDialog = ({ open, setOpen }) => {
         description: description.trim()
       };
 
+      const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
       const uploadResponse = await axios.post(
-        "http://127.0.0.1:5000/upload-and-store", 
+        `${API_URL}/upload-and-store`,
         backendData,
         {
           headers: {
