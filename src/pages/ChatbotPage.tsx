@@ -35,6 +35,7 @@ const ChatbotPage = () => {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  console.log(input)
 
   // Fetch videos when the component mounts
   useEffect(() => {
@@ -104,8 +105,12 @@ const ChatbotPage = () => {
         params: {
           query: input,
           video_name: selectedVideo
+        },
+        headers: {
+          'Content-Type': 'application/json'
         }
       });
+      
       
       const results = response.data.results;
 
