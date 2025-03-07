@@ -139,19 +139,20 @@ const ChatbotPage = () => {
             <p className="text-gray-600">Ask questions about your videos</p>
           </div>
           <div className="flex items-center gap-4">
-            <select
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              value={selectedVideo}
-              onChange={(e) => setSelectedVideo(e.target.value)}
+          <select
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            value={selectedVideo}
+            onChange={(e) => setSelectedVideo(e.target.value)}
             >
-              <option value="">Select a video</option>
-              
-              {videos.map((video, index) => (
-                <option key={index} value={video}>
-                  {video}
-                </option>
-              ))}
-            </select>
+          <option value="">Select a video</option>
+          <option value="all">All Videos</option> {/* Add this line */}
+          {videos.map((video, index) => (
+          <option key={index} value={video}>
+          {video}
+          </option>
+          ))}
+          </select>
+
           </div>
         </div>
 

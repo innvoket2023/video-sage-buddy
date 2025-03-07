@@ -44,62 +44,44 @@ const VideoUploadDialog = ({ open, setOpen }) => {
   };
 
   const handleUpload = async () => {
-    console.log("Test outside")
     if (!selectedFile) return;
 
     setUploading(true);
     setUploadProgress(0);
     setError("");
 
-    // Create FormData object to send file
+    // Create a single FormData object for both file and metadata
     const formData = new FormData();
     formData.append("file", selectedFile);
+    
+    // Add title and description to the same FormData if provided
+    if (title.trim()) {
+      formData.append("title", title.trim());
+    }
+    if (description.trim()) {
+      formData.append("description", description.trim());
+    }
 
     try {
-      // Configure axios for the first request with upload progress tracking
-      const uploadInstance = axios.create({
-        baseURL: "http://127.0.0.1:5000",
-      });
+      // Use a SINGLE API call to handle both upload and storage
+      const uploadResponse = await axios.post(
+        "http://localhost:5000/upload-and-store",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
 
-      // First, upload the video file with progress tracking
-      const uploadResponse = await uploadInstance.post("/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 90) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        },
-      });
-
-      setUploadProgress(95);
-
-      console.log(uploadResponse.data.transcript);
-
-      // Only include title and description if provided
-      const storeData = {
-        transcript: uploadResponse.data.transcript,
-      };
-      console.log("Test 2")
-
-      if (title.trim()) {
-        storeData.video_name = title;
-      }
-
-      if (description.trim()) {
-        storeData.description = description;
-      }
-
-
-
-      // Then, store the transcript with video metadata (optional title and description)
-      const store_response = await axios.post("http://localhost:5000/store", storeData);
-
-      console.log(store_response);
+      console.log(uploadResponse.data);
       
-      setUploadProgress(100);
       setTimeout(() => {
         setUploading(false);
         setSelectedFile(null);
@@ -114,7 +96,6 @@ const VideoUploadDialog = ({ open, setOpen }) => {
       );
       setUploading(false);
     }
-    console.log("final final final")
   };
 
   const handleCancel = () => {
@@ -124,7 +105,6 @@ const VideoUploadDialog = ({ open, setOpen }) => {
     setDescription("");
     setError("");
     setOpen(false);
-    console.log("Literally final final")
   };
 
   return (
