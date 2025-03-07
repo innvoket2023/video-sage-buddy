@@ -58,7 +58,7 @@ const ChatbotPage = () => {
     if (selectedVideo) {
       // Find the selected video in our videos array
       const videoDetails = videos.find(video => video.publicID === selectedVideo);
-      
+
       if (videoDetails) {
         setCurrentVideo(videoDetails);
       } else {
@@ -96,12 +96,12 @@ const ChatbotPage = () => {
     setMessages([...messages, { type: "user", content: input }]);
     // Clear input
     setInput("");
-    
+
     setLoading(true);
 
     try {
       // Query the backend with the selected video name
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/query`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/query`, null, {
         params: {
           query: input,
           video_name: selectedVideo
@@ -109,9 +109,9 @@ const ChatbotPage = () => {
         headers: {
           'Content-Type': 'application/json'
         }
-      });
-      
-      
+      })
+
+
       const results = response.data.results;
 
       // Add bot response
@@ -152,14 +152,14 @@ const ChatbotPage = () => {
       // Convert timestamp (like "1:30") to seconds
       const parts = timestamp.split(':').map(Number);
       let seconds = 0;
-      
+
       // Handle different timestamp formats (HH:MM:SS or MM:SS)
       if (parts.length === 3) {
         seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
       } else if (parts.length === 2) {
         seconds = parts[0] * 60 + parts[1];
       }
-      
+
       // Set video time and play
       videoRef.current.currentTime = seconds;
       videoRef.current.play().catch(err => {
@@ -206,8 +206,8 @@ const ChatbotPage = () => {
                   >
                     <div
                       className={`max-w-[80%] p-4 rounded-lg ${message.type === "user"
-                          ? "bg-primary text-white"
-                          : "bg-gray-100"
+                        ? "bg-primary text-white"
+                        : "bg-gray-100"
                         }`}
                     >
                       <p>{message.content}</p>
@@ -262,11 +262,11 @@ const ChatbotPage = () => {
           <Card className="w-96">
             <div className="aspect-video bg-gray-100 relative">
               {selectedVideo && currentVideo?.video_url ? (
-                <video 
-                  ref={videoRef} 
-                  id="video-preview" 
-                  key={selectedVideo} 
-                  controls 
+                <video
+                  ref={videoRef}
+                  id="video-preview"
+                  key={selectedVideo}
+                  controls
                   className="w-full h-full"
                 >
                   <source src={currentVideo.video_url} type="video/mp4" />
