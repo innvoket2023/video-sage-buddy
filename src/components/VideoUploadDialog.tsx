@@ -22,6 +22,10 @@ const VideoUploadDialog = ({ open, setOpen }) => {
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
 
+  const CLOUDINARY_UPLOAD_PRESET = "video_uploads"; // Set your upload preset here
+  const CLOUDINARY_CLOUD_NAME = "dmumfcdka"; // Set your cloud name here
+  const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith("video/")) {
@@ -50,38 +54,64 @@ const VideoUploadDialog = ({ open, setOpen }) => {
     setUploadProgress(0);
     setError("");
 
-    // Create a single FormData object for both file and metadata
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    
-    // Add title and description to the same FormData if provided
-    if (title.trim()) {
-      formData.append("title", title.trim());
-    }
-    if (description.trim()) {
-      formData.append("description", description.trim());
-    }
-
     try {
-      // Use a SINGLE API call to handle both upload and storage
-      const uploadResponse = await axios.post(
-        "http://localhost:5000/upload-and-store",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            setUploadProgress(percentCompleted);
-          },
-        }
-      );
+      // First, upload to Cloudinary
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      formData.append("resource_type", "video");
 
-      console.log(uploadResponse.data);
-      
+      // Add title and description to the same FormData if provided
+      if (title.trim()) {
+        formData.append("title", title.trim());
+      }
+      if (description.trim()) {
+        formData.append("description", description.trim());
+      }
+
+      // Upload to Cloudinary with progress tracking
+      const cloudinaryResponse = await axios.post(CLOUDINARY_UPLOAD_URL, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 50) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        },
+      });
+
+      setUploadProgress(60);
+
+      // Get the video URL from Cloudinary
+      const videoUrl = cloudinaryResponse.data.secure_url;
+      const publicId = cloudinaryResponse.data.public_id;
+
+      console.log(videoUrl)
+
+      // Then, send the video URL to our backend for processing
+      const uploadResponse = await axios.post("http://127.0.0.1:5000/upload-and-store", {
+        video_url: videoUrl,
+        public_id: publicId,
+        formData: formData
+      }, {
+
+        onUploadProgress: (progressEvent) => {
+          // This only tracks the upload of our request, not the processing time
+          const percentCompleted = 60 + Math.round(
+            (progressEvent.loaded * 10) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        },
+      });
+
+      setUploadProgress(95);
+      console.log(uploadResponse)
+
+      console.log(uploadResponse.data.transcript);
+
+      setUploadProgress(100);
       setTimeout(() => {
         setUploading(false);
         setSelectedFile(null);
@@ -96,7 +126,7 @@ const VideoUploadDialog = ({ open, setOpen }) => {
       );
       setUploading(false);
     }
-  };
+  };;
 
   const handleCancel = () => {
     if (uploading) return;

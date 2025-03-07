@@ -149,10 +149,11 @@ const VideoLibrary = () => {
         open={uploadDialogOpen} 
         setOpen={(isOpen) => {
           setUploadDialogOpen(isOpen);
-          if (!isOpen) {
-            // Refresh videos when dialog closes
-            handleUploadComplete();
-          }
+          // if (!isOpen) {
+          //   // Refresh videos when dialog closes
+          //   // handleUploadComplete();
+            
+          // }
         }} 
       />
     </DashboardLayout>

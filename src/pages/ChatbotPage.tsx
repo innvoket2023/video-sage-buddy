@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,27 +14,33 @@ type Message = {
 
 // Define the video type
 type Video = {
-  name: string;
+  video_name: string;
   duration?: string;
+  public_id: string;
+  video_url: string;
 };
 
 const ChatbotPage = () => {
   const [messages, setMessages] = useState<Message[]>([
-    { 
-      type: "bot", 
-      content: "Hello! I'm ready to help you analyze your videos. What would you like to know?" 
+    {
+      type: "bot",
+      content: "Hello! I'm ready to help you analyze your videos. What would you like to know?"
     },
   ]);
   const [input, setInput] = useState("");
-  const [videos, setVideos] = useState<string[]>([]); // State to store video names
-  const [selectedVideo, setSelectedVideo] = useState(""); // State to store selected video
+  const [videos, setVideos] = useState<Video[]>([]); // State to store video names
+  const [selectedVideo, setSelectedVideo] = useState<string>(""); // State to store selected video
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
+  const [loading, setLoading] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Fetch video names when the component mounts
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         const response = await axios.get("http://localhost:5000/videos");
+
+        console.log("response",response )
         setVideos(response.data.videos);
       } catch (error) {
         console.error("Error fetching videos:", error);
@@ -52,12 +58,12 @@ const ChatbotPage = () => {
         name: selectedVideo,
         duration: "12:34" // This would ideally come from the backend
       });
-      
+
       // Reset messages when changing videos
       setMessages([
-        { 
-          type: "bot", 
-          content: `I'm ready to answer questions about "${selectedVideo}". What would you like to know?` 
+        {
+          type: "bot",
+          content: `I'm ready to answer questions about "${selectedVideo}". What would you like to know?`
         },
       ]);
     } else {
@@ -68,11 +74,11 @@ const ChatbotPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    
+
     // Validate if a video is selected
     if (!selectedVideo) {
       setMessages([
-        ...messages, 
+        ...messages,
         { type: "user", content: input },
         { type: "bot", content: "Please select a video first before asking questions." }
       ]);
@@ -139,19 +145,19 @@ const ChatbotPage = () => {
             <p className="text-gray-600">Ask questions about your videos</p>
           </div>
           <div className="flex items-center gap-4">
-          <select
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            value={selectedVideo}
-            onChange={(e) => setSelectedVideo(e.target.value)}
+            <select
+              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              value={selectedVideo}
+              onChange={(e) => setSelectedVideo(e.target.value)}
             >
-          <option value="">Select a video</option>
-          <option value="all">All Videos</option> {/* Add this line */}
-          {videos.map((video, index) => (
-          <option key={index} value={video}>
-          {video}
-          </option>
-          ))}
-          </select>
+              <option value="">Select a video</option>
+              <option value="all">All Videos</option> {/* Add this line */}
+              {videos.map((video, index) => (
+                <option key={index} value={video}>
+                  {video}
+                </option>
+              ))}
+            </select>
 
           </div>
         </div>
@@ -168,11 +174,10 @@ const ChatbotPage = () => {
                     className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[80%] p-4 rounded-lg ${
-                        message.type === "user"
+                      className={`max-w-[80%] p-4 rounded-lg ${message.type === "user"
                           ? "bg-primary text-white"
                           : "bg-gray-100"
-                      }`}
+                        }`}
                     >
                       <p>{message.content}</p>
                       {message.timestamp && (
@@ -199,7 +204,7 @@ const ChatbotPage = () => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={
-                      selectedVideo 
+                      selectedVideo
                         ? `Ask a question about "${selectedVideo}"...`
                         : "Please select a video first..."
                     }
@@ -216,14 +221,19 @@ const ChatbotPage = () => {
           </div>
 
           {/* Video Preview */}
+          console.log(video.video);
+          
           <Card className="w-96">
             <div className="aspect-video bg-gray-100 relative">
-              {currentVideo ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <Film className="h-16 w-16 text-gray-400 mb-2" />
-                  <p className="text-gray-500 font-medium">Preview not available</p>
-                  <p className="text-sm text-gray-400">Video loaded and ready for queries</p>
-                </div>
+              {selectedVideo ? (
+                // <div className="absolute inset-0 flex flex-col items-center justify-center">
+                //   <Film className="h-16 w-16 text-gray-400 mb-2" />
+                //   <p className="text-gray-500 font-medium">Preview not available</p>
+                //   <p className="text-sm text-gray-400">Video loaded and ready for queries</p>
+                // </div>
+                <video ref={videoRef} id="video-preview" key={selectedVideo} controls className="w-full h-full">
+                  <source src={videos.find(video => video.publicId === selectedVideo)?.video_url} type="video/mp4" /></video>
+
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <p className="text-gray-400">No video selected</p>
