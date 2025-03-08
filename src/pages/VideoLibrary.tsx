@@ -13,7 +13,7 @@ const VideoLibrary = () => {
   // Fetch videos from the backend
   const fetchVideos = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/videos");
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/videos`);
       // Map the video names to the expected format with placeholder data
       const fetchedVideos = response.data.videos.map((videoName, index) => ({
         id: videos.length + index + 1,

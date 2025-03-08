@@ -44,7 +44,7 @@ const ChatbotPage = () => {
     const fetchVideos = async () => {
       try {
         // Get video list with full details
-        const response = await axios.get("http://localhost:5000/preview");
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/preview`);
         console.log("Videos response:", response.data);
         setVideos(response.data.videos || []);
       } catch (error) {
@@ -179,10 +179,18 @@ const ChatbotPage = () => {
 
     try {
       // Query the backend with the selected video name
-      const response = await axios.post("http://localhost:5000/query", {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/query`, {
         query: input,
-        video_name: selectedVideo, // Pass the selected video name
-      });
+        video_name: selectedVideo
+      }, {
+        params: {
+          query: input,
+          video_name: selectedVideo
+        },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
       const results = response.data.results;
 
       // Add bot response
@@ -288,16 +296,14 @@ const ChatbotPage = () => {
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex ${
-                      message.type === "user" ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex ${message.type === "user" ? "justify-end" : "justify-start"
+                      }`}
                   >
                     <div
-                      className={`max-w-[80%] p-4 rounded-lg ${
-                        message.type === "user"
+                      className={`max-w-[80%] p-4 rounded-lg ${message.type === "user"
                           ? "bg-primary text-white"
                           : "bg-gray-100"
-                      }`}
+                        }`}
                     >
                       {/* New parseMessageWithTimestamps */}
                       {message.type === "bot" ? (
@@ -341,11 +347,10 @@ const ChatbotPage = () => {
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={
                       selectedVideo
-                        ? `Ask a question about "${
-                            selectedVideo === "all"
-                              ? "all videos"
-                              : selectedVideo
-                          }"...`
+                        ? `Ask a question about "${selectedVideo === "all"
+                          ? "all videos"
+                          : selectedVideo
+                        }"...`
                         : "Please select a video first..."
                     }
                     className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
