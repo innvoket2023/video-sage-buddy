@@ -10,6 +10,7 @@ type Message = {
   type: "bot" | "user";
   content: string;
   timestamp?: string; // Make timestamp optional
+  source?: string;
 };
 
 // Define the video type
@@ -26,12 +27,14 @@ const ChatbotPage = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       type: "bot",
-      content: "Hello! I'm ready to help you analyze your videos. What would you like to know?"
+      content:
+        "Hello! I'm ready to help you analyze your videos. What would you like to know?",
     },
   ]);
   const [input, setInput] = useState("");
   const [videos, setVideos] = useState<Video[]>([]); // State to store video objects
   const [selectedVideo, setSelectedVideo] = useState<string>(""); // State to store selected video ID
+  const [previewVideoId, setPreviewVideoId] = useState<string>("");
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -52,81 +55,101 @@ const ChatbotPage = () => {
     fetchVideos();
   }, []);
 
-  // Update current video when selection changes
+  // Update preview video ID when selection changes
   useEffect(() => {
+    console.log(selectedVideo);
+
     if (selectedVideo) {
-      // Find the selected video in our videos array
-      const videoDetails = videos.find(video => video.publicID === selectedVideo);
-      
-      if (videoDetails) {
-        setCurrentVideo(videoDetails);
+      if (selectedVideo === "all") {
+        setPreviewVideoId("");
       } else {
-        setCurrentVideo(null);
+        setPreviewVideoId(selectedVideo);
       }
 
       // Reset messages when changing videos
       setMessages([
         {
           type: "bot",
-          content: `I'm ready to answer questions about "${selectedVideo}". What would you like to know?`
+          content:
+            selectedVideo === "all"
+              ? "I'm ready to answer questions about all your videos. What would you like to know?"
+              : `I'm ready to answer questions about "${selectedVideo}". What would you like to know?`,
         },
       ]);
     } else {
+      setPreviewVideoId("");
+    }
+  }, [selectedVideo]);
+
+  useEffect(() => {
+    console.log(previewVideoId);
+
+    if (previewVideoId) {
+      const videoDetails = videos.find(
+        (video) => video.publicID === previewVideoId
+      );
+
+      if (videoDetails) {
+        console.log(videoDetails);
+        setCurrentVideo(videoDetails);
+      } else {
+        setCurrentVideo(null);
+      }
+    } else {
       setCurrentVideo(null);
     }
-  }, [selectedVideo, videos]);
+  }, [previewVideoId, videos]);
 
   // Parse message content for timestamps
   const parseMessageWithTimestamps = (content: string) => {
-    const timestampRegex = /(?:\[|\(|at\s+|time\s+|timestamp\s+)(\d{1,2}:\d{2}(?::\d{2})?)(?:\]|\)|,|\s)/gi;
+    const timestampRegex =
+      /(?:\[|\(|at\s+|time\s+|timestamp\s+)(\d{1,2}:\d{2}(?::\d{2})?)(?:\]|\)|,|\s)/gi;
 
     const matches = [...content.matchAll(timestampRegex)];
-    
+
     if (matches.length === 0) {
       return <p>{content}</p>;
     }
-    const elements = [];
-    let lastIndex = 0;
-    
-    matches.forEach((match, index) => {
-      const [fullMatch, timestamp] = match;
-      const startIndex = match.index || 0;
-      
-      // Add text before the timestamp
-      if (startIndex > lastIndex) {
-        elements.push(
-          <span key={`text-${index}`}>
-            {content.substring(lastIndex, startIndex)}
-          </span>
-        );
+
+    const timestamps: string[] = [];
+
+    matches.forEach((match) => {
+      const [_, timestamp] = match;
+      if (timestamp && !timestamps.includes(timestamp)) {
+        timestamps.push(timestamp);
       }
-      
-      // ^ clickable timestamp
-      elements.push(
-        <Button
-          key={`timestamp-${index}`}
-          variant="link"
-          size="sm"
-          className="px-1 py-0 h-auto font-medium text-primary underline"
-          onClick={() => handlePlayAtTimestamp(timestamp)}
-        >
-          {fullMatch}
-        </Button>
-      );
-      
-      lastIndex = startIndex + fullMatch.length;
     });
-    
-    // Add any remaining text
-    if (lastIndex < content.length) {
-      elements.push(
-        <span key="text-end">
-          {content.substring(lastIndex)}
-        </span>
-      );
-    }
-    
-    return <p>{elements}</p>;
+
+    let plainTextContent = content;
+    matches.forEach((match) => {
+      const [fullMatch] = match;
+      const startIndex = match.index || 0;
+      plainTextContent =
+        plainTextContent.substring(0, startIndex) +
+        fullMatch +
+        plainTextContent.substring(startIndex + fullMatch.length);
+    });
+
+    return (
+      <>
+        <p>{plainTextContent}</p>
+        {timestamps.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {timestamps.map((timestamp, index) => (
+              <Button
+                key={`timestamp-btn-${index}`}
+                variant="secondary"
+                size="sm"
+                onClick={() => handlePlayAtTimestamp(timestamp)}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Play at {timestamp}
+              </Button>
+            ))}
+          </div>
+        )}
+      </>
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,7 +161,10 @@ const ChatbotPage = () => {
       setMessages([
         ...messages,
         { type: "user", content: input },
-        { type: "bot", content: "Please select a video first before asking questions." }
+        {
+          type: "bot",
+          content: "Please select a video first before asking questions.",
+        },
       ]);
       setInput("");
       return;
@@ -148,7 +174,7 @@ const ChatbotPage = () => {
     setMessages([...messages, { type: "user", content: input }]);
     // Clear input
     setInput("");
-    
+
     setLoading(true);
 
     try {
@@ -161,16 +187,23 @@ const ChatbotPage = () => {
 
       // Add bot response
       if (results.length > 0) {
-        setMessages(prev => [
+        //^ All selected Case
+        if (selectedVideo === "all" && results[0].source) {
+          console.log(results[0].source);
+          setPreviewVideoId(results[0].source);
+        }
+
+        setMessages((prev) => [
           ...prev,
           {
             type: "bot",
             content: results[0].content,
             timestamp: results[0].timestamp,
+            source: results[0].source,
           },
         ]);
       } else {
-        setMessages(prev => [
+        setMessages((prev) => [
           ...prev,
           {
             type: "bot",
@@ -180,7 +213,7 @@ const ChatbotPage = () => {
       }
     } catch (error) {
       console.error("Error querying video:", error);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           type: "bot",
@@ -195,9 +228,9 @@ const ChatbotPage = () => {
   const handlePlayAtTimestamp = (timestamp: string) => {
     if (videoRef.current && timestamp) {
       // Convert timestamp (like "1:30" or "01:30:45") to seconds
-      const parts = timestamp.split(':').map(Number);
+      const parts = timestamp.split(":").map(Number);
       let seconds = 0;
-      
+
       // Handle different timestamp formats (HH:MM:SS or MM:SS or SS)
       if (parts.length === 3) {
         seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
@@ -206,13 +239,19 @@ const ChatbotPage = () => {
       } else if (parts.length === 1) {
         seconds = parts[0];
       }
-      
+
       // Set video time and play
       videoRef.current.currentTime = seconds;
-      videoRef.current.play().catch(err => {
+      videoRef.current.play().catch((err) => {
         console.error("Error playing video:", err);
       });
     }
+  };
+
+  //^ handler for video selection changes
+  const handleVideoSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSelection = e.target.value;
+    setSelectedVideo(newSelection);
   };
 
   return (
@@ -227,7 +266,7 @@ const ChatbotPage = () => {
             <select
               className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               value={selectedVideo}
-              onChange={(e) => setSelectedVideo(e.target.value)}
+              onChange={handleVideoSelection}
             >
               <option value="">Select a video</option>
               <option value="all">All Videos</option>
@@ -249,27 +288,33 @@ const ChatbotPage = () => {
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                    className={`flex ${
+                      message.type === "user" ? "justify-end" : "justify-start"
+                    }`}
                   >
                     <div
-                      className={`max-w-[80%] p-4 rounded-lg ${message.type === "user"
+                      className={`max-w-[80%] p-4 rounded-lg ${
+                        message.type === "user"
                           ? "bg-primary text-white"
                           : "bg-gray-100"
-                        }`}
+                      }`}
                     >
                       {/* New parseMessageWithTimestamps */}
-                      {message.type === "bot" 
-                        ? parseMessageWithTimestamps(message.content)
-                        : <p>{message.content}</p>
-                      }
-                      
+                      {message.type === "bot" ? (
+                        parseMessageWithTimestamps(message.content)
+                      ) : (
+                        <p>{message.content}</p>
+                      )}
+
                       {/* timestamp button */}
                       {message.timestamp && (
                         <Button
                           variant="secondary"
                           size="sm"
                           className="mt-2"
-                          onClick={() => handlePlayAtTimestamp(message.timestamp || '')}
+                          onClick={() =>
+                            handlePlayAtTimestamp(message.timestamp || "")
+                          }
                         >
                           <Play className="h-4 w-4 mr-2" />
                           Play at {message.timestamp}
@@ -296,7 +341,11 @@ const ChatbotPage = () => {
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={
                       selectedVideo
-                        ? `Ask a question about "${selectedVideo}"...`
+                        ? `Ask a question about "${
+                            selectedVideo === "all"
+                              ? "all videos"
+                              : selectedVideo
+                          }"...`
                         : "Please select a video first..."
                     }
                     className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
@@ -314,26 +363,34 @@ const ChatbotPage = () => {
           {/* Video Preview */}
           <Card className="w-96">
             <div className="aspect-video bg-gray-100 relative">
-              {selectedVideo && currentVideo?.video_url ? (
-                <video 
-                  ref={videoRef} 
-                  id="video-preview" 
-                  key={selectedVideo} 
-                  controls 
+              {currentVideo?.video_url ? (
+                <video
+                  ref={videoRef}
+                  id="video-preview"
+                  key={currentVideo.publicID}
+                  controls
                   className="w-full h-full"
                 >
                   <source src={currentVideo.video_url} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
-              ) : selectedVideo ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <Film className="h-16 w-16 text-gray-400 mb-2" />
-                  <p className="text-gray-500 font-medium">Video loading or unavailable</p>
-                  <p className="text-sm text-gray-400">Selected: {selectedVideo}</p>
-                </div>
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-gray-400">No video selected</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  {selectedVideo ? (
+                    <>
+                      <Film className="h-16 w-16 text-gray-400 mb-2" />
+                      <p className="text-gray-500 font-medium">
+                        Video loading or unavailable
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        {selectedVideo === "all"
+                          ? "Ask a question to see a relevant video"
+                          : `Selected: ${selectedVideo}`}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-gray-400">No video selected</p>
+                  )}
                 </div>
               )}
             </div>
@@ -342,11 +399,22 @@ const ChatbotPage = () => {
                 <>
                   <h3 className="font-medium">{currentVideo.publicID}</h3>
                   {currentVideo.description && (
-                    <p className="text-sm text-gray-600 mt-1">{currentVideo.description}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {currentVideo.description}
+                    </p>
+                  )}
+                  {selectedVideo === "all" && previewVideoId && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Showing video relevant to your query
+                    </p>
                   )}
                 </>
               ) : (
-                <p className="text-gray-500">Please select a video from the dropdown</p>
+                <p className="text-gray-500">
+                  {selectedVideo === "all"
+                    ? "Ask a question to see a relevant video"
+                    : "Please select a video from the dropdown"}
+                </p>
               )}
             </div>
           </Card>
