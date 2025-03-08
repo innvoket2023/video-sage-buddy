@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,32 +8,7 @@ import VideoUploadDialog from "@/components/VideoUploadDialog";
 
 const VideoLibrary = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [videos, setVideos] = useState([
-    {
-      id: 1,
-      title: "Marketing Presentation",
-      thumbnail: "/placeholder.svg",
-      duration: "12:34",
-      date: "2024-02-15",
-      status: "Processed",
-    },
-    {
-      id: 2,
-      title: "Product Demo",
-      thumbnail: "/placeholder.svg",
-      duration: "08:45",
-      date: "2024-02-14",
-      status: "Processing",
-    },
-    {
-      id: 3,
-      title: "Team Meeting",
-      thumbnail: "/placeholder.svg",
-      duration: "45:21",
-      date: "2024-02-13",
-      status: "Processed",
-    },
-  ]);
+  const [videos, setVideos] = useState([]);
 
   // Fetch videos from the backend
   const fetchVideos = async () => {
@@ -45,15 +20,17 @@ const VideoLibrary = () => {
         title: videoName,
         thumbnail: "/placeholder.svg",
         duration: "00:00", // Placeholder duration
-        date: new Date().toISOString().split('T')[0], // Today's date
+        date: new Date().toISOString().split("T")[0], // Today's date
         status: "Processed",
       }));
-      
+
       // Combine existing videos with new ones
-      setVideos(prevVideos => {
+      setVideos((prevVideos) => {
         // Filter out any duplicates based on title
-        const existingTitles = new Set(prevVideos.map(v => v.title));
-        const newVideos = fetchedVideos.filter(v => !existingTitles.has(v.title));
+        const existingTitles = new Set(prevVideos.map((v) => v.title));
+        const newVideos = fetchedVideos.filter(
+          (v) => !existingTitles.has(v.title)
+        );
         return [...prevVideos, ...newVideos];
       });
     } catch (error) {
@@ -71,7 +48,9 @@ const VideoLibrary = () => {
     // Refresh the video list after a successful upload
     fetchVideos();
   };
-
+  useEffect(() => {
+    fetchVideos();
+  }, []);
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -108,7 +87,10 @@ const VideoLibrary = () => {
         {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {videos.map((video) => (
-            <Card key={video.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card
+              key={video.id}
+              className="overflow-hidden hover:shadow-lg transition-shadow"
+            >
               <div className="aspect-video bg-gray-100 relative">
                 <img
                   src={video.thumbnail}
@@ -130,11 +112,13 @@ const VideoLibrary = () => {
                   </Button>
                 </div>
                 <div className="mt-2">
-                  <span className={`text-sm px-2 py-1 rounded ${
-                    video.status === "Processed" 
-                      ? "bg-green-100 text-green-700"
-                      : "bg-yellow-100 text-yellow-700"
-                  }`}>
+                  <span
+                    className={`text-sm px-2 py-1 rounded ${
+                      video.status === "Processed"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
                     {video.status}
                   </span>
                 </div>
@@ -145,16 +129,15 @@ const VideoLibrary = () => {
       </div>
 
       {/* Video Upload Dialog */}
-      <VideoUploadDialog 
-        open={uploadDialogOpen} 
+      <VideoUploadDialog
+        open={uploadDialogOpen}
         setOpen={(isOpen) => {
           setUploadDialogOpen(isOpen);
-          // if (!isOpen) {
-          //   // Refresh videos when dialog closes
-          //   // handleUploadComplete();
-            
-          // }
-        }} 
+          if (!isOpen) {
+            // Refresh videos when dialog closes
+            handleUploadComplete();
+          }
+        }}
       />
     </DashboardLayout>
   );
