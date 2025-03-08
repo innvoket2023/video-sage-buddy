@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,16 +10,13 @@ const VideoLibrary = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [videos, setVideos] = useState([]);
 
-  // Fetch videos from the backend
   const fetchVideos = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/videos`);
-      // Map the video names to the expected format with placeholder data
       const fetchedVideos = response.data.videos.map((videoName, index) => ({
         id: videos.length + index + 1,
         title: videoName,
         thumbnail: "/placeholder.svg",
-        duration: "00:00", // Placeholder duration
         date: new Date().toISOString().split("T")[0], // Today's date
         status: "Processed",
       }));
@@ -38,19 +35,18 @@ const VideoLibrary = () => {
     }
   };
 
-  // Open the upload dialog when the upload button is clicked
   const handleUploadClick = () => {
     setUploadDialogOpen(true);
   };
 
-  // Handle when the upload dialog is closed
   const handleUploadComplete = () => {
-    // Refresh the video list after a successful upload
     fetchVideos();
   };
+
   useEffect(() => {
     fetchVideos();
   }, []);
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -60,7 +56,6 @@ const VideoLibrary = () => {
             <p className="text-gray-600">Manage and analyze your videos</p>
           </div>
           <div>
-            {/* Upload button that opens the dialog */}
             <Button onClick={handleUploadClick}>
               <Upload className="h-4 w-4 mr-2" />
               Upload Video
@@ -68,7 +63,6 @@ const VideoLibrary = () => {
           </div>
         </div>
 
-        {/* Search and Filter */}
         <div className="flex items-center gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -84,7 +78,6 @@ const VideoLibrary = () => {
           </Button>
         </div>
 
-        {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {videos.map((video) => (
             <Card
@@ -97,9 +90,6 @@ const VideoLibrary = () => {
                   alt={video.title}
                   className="w-full h-full object-cover"
                 />
-                <span className="absolute bottom-2 right-2 bg-black/75 text-white px-2 py-1 rounded text-sm">
-                  {video.duration}
-                </span>
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between">
@@ -128,13 +118,11 @@ const VideoLibrary = () => {
         </div>
       </div>
 
-      {/* Video Upload Dialog */}
       <VideoUploadDialog
         open={uploadDialogOpen}
         setOpen={(isOpen) => {
           setUploadDialogOpen(isOpen);
           if (!isOpen) {
-            // Refresh videos when dialog closes
             handleUploadComplete();
           }
         }}
@@ -144,3 +132,4 @@ const VideoLibrary = () => {
 };
 
 export default VideoLibrary;
+
