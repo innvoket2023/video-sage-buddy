@@ -76,6 +76,59 @@ const ChatbotPage = () => {
     }
   }, [selectedVideo, videos]);
 
+  // Parse message content for timestamps
+  const parseMessageWithTimestamps = (content: string) => {
+    const timestampRegex = /(?:\[|\(|at\s+|time\s+|timestamp\s+)(\d{1,2}:\d{2}(?::\d{2})?)(?:\]|\)|,|\s)/gi;
+
+    const matches = [...content.matchAll(timestampRegex)];
+    
+    if (matches.length === 0) {
+      return <p>{content}</p>;
+    }
+    const elements = [];
+    let lastIndex = 0;
+    
+    matches.forEach((match, index) => {
+      const [fullMatch, timestamp] = match;
+      const startIndex = match.index || 0;
+      
+      // Add text before the timestamp
+      if (startIndex > lastIndex) {
+        elements.push(
+          <span key={`text-${index}`}>
+            {content.substring(lastIndex, startIndex)}
+          </span>
+        );
+      }
+      
+      // ^ clickable timestamp
+      elements.push(
+        <Button
+          key={`timestamp-${index}`}
+          variant="link"
+          size="sm"
+          className="px-1 py-0 h-auto font-medium text-primary underline"
+          onClick={() => handlePlayAtTimestamp(timestamp)}
+        >
+          {fullMatch}
+        </Button>
+      );
+      
+      lastIndex = startIndex + fullMatch.length;
+    });
+    
+    // Add any remaining text
+    if (lastIndex < content.length) {
+      elements.push(
+        <span key="text-end">
+          {content.substring(lastIndex)}
+        </span>
+      );
+    }
+    
+    return <p>{elements}</p>;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -141,15 +194,17 @@ const ChatbotPage = () => {
 
   const handlePlayAtTimestamp = (timestamp: string) => {
     if (videoRef.current && timestamp) {
-      // Convert timestamp (like "1:30") to seconds
+      // Convert timestamp (like "1:30" or "01:30:45") to seconds
       const parts = timestamp.split(':').map(Number);
       let seconds = 0;
       
-      // Handle different timestamp formats (HH:MM:SS or MM:SS)
+      // Handle different timestamp formats (HH:MM:SS or MM:SS or SS)
       if (parts.length === 3) {
         seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
       } else if (parts.length === 2) {
         seconds = parts[0] * 60 + parts[1];
+      } else if (parts.length === 1) {
+        seconds = parts[0];
       }
       
       // Set video time and play
@@ -202,7 +257,13 @@ const ChatbotPage = () => {
                           : "bg-gray-100"
                         }`}
                     >
-                      <p>{message.content}</p>
+                      {/* New parseMessageWithTimestamps */}
+                      {message.type === "bot" 
+                        ? parseMessageWithTimestamps(message.content)
+                        : <p>{message.content}</p>
+                      }
+                      
+                      {/* timestamp button */}
                       {message.timestamp && (
                         <Button
                           variant="secondary"
