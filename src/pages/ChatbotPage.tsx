@@ -35,14 +35,13 @@ const ChatbotPage = () => {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  console.log(input)
 
   // Fetch videos when the component mounts
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         // Get video list with full details
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/preview`);
+        const response = await axios.get("http://localhost:5000/preview");
         console.log("Videos response:", response.data);
         setVideos(response.data.videos || []);
       } catch (error) {
@@ -58,7 +57,7 @@ const ChatbotPage = () => {
     if (selectedVideo) {
       // Find the selected video in our videos array
       const videoDetails = videos.find(video => video.publicID === selectedVideo);
-
+      
       if (videoDetails) {
         setCurrentVideo(videoDetails);
       } else {
@@ -76,6 +75,59 @@ const ChatbotPage = () => {
       setCurrentVideo(null);
     }
   }, [selectedVideo, videos]);
+
+  // Parse message content for timestamps
+  const parseMessageWithTimestamps = (content: string) => {
+    const timestampRegex = /(?:\[|\(|at\s+|time\s+|timestamp\s+)(\d{1,2}:\d{2}(?::\d{2})?)(?:\]|\)|,|\s)/gi;
+
+    const matches = [...content.matchAll(timestampRegex)];
+    
+    if (matches.length === 0) {
+      return <p>{content}</p>;
+    }
+    const elements = [];
+    let lastIndex = 0;
+    
+    matches.forEach((match, index) => {
+      const [fullMatch, timestamp] = match;
+      const startIndex = match.index || 0;
+      
+      // Add text before the timestamp
+      if (startIndex > lastIndex) {
+        elements.push(
+          <span key={`text-${index}`}>
+            {content.substring(lastIndex, startIndex)}
+          </span>
+        );
+      }
+      
+      // ^ clickable timestamp
+      elements.push(
+        <Button
+          key={`timestamp-${index}`}
+          variant="link"
+          size="sm"
+          className="px-1 py-0 h-auto font-medium text-primary underline"
+          onClick={() => handlePlayAtTimestamp(timestamp)}
+        >
+          {fullMatch}
+        </Button>
+      );
+      
+      lastIndex = startIndex + fullMatch.length;
+    });
+    
+    // Add any remaining text
+    if (lastIndex < content.length) {
+      elements.push(
+        <span key="text-end">
+          {content.substring(lastIndex)}
+        </span>
+      );
+    }
+    
+    return <p>{elements}</p>;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,25 +148,15 @@ const ChatbotPage = () => {
     setMessages([...messages, { type: "user", content: input }]);
     // Clear input
     setInput("");
-
+    
     setLoading(true);
 
     try {
       // Query the backend with the selected video name
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/query`, {
+      const response = await axios.post("http://localhost:5000/query", {
         query: input,
-        video_name: selectedVideo
-      }, {
-        params: {
-          query: input,
-          video_name: selectedVideo
-        },
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-
+        video_name: selectedVideo, // Pass the selected video name
+      });
       const results = response.data.results;
 
       // Add bot response
@@ -152,17 +194,19 @@ const ChatbotPage = () => {
 
   const handlePlayAtTimestamp = (timestamp: string) => {
     if (videoRef.current && timestamp) {
-      // Convert timestamp (like "1:30") to seconds
+      // Convert timestamp (like "1:30" or "01:30:45") to seconds
       const parts = timestamp.split(':').map(Number);
       let seconds = 0;
-
-      // Handle different timestamp formats (HH:MM:SS or MM:SS)
+      
+      // Handle different timestamp formats (HH:MM:SS or MM:SS or SS)
       if (parts.length === 3) {
         seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
       } else if (parts.length === 2) {
         seconds = parts[0] * 60 + parts[1];
+      } else if (parts.length === 1) {
+        seconds = parts[0];
       }
-
+      
       // Set video time and play
       videoRef.current.currentTime = seconds;
       videoRef.current.play().catch(err => {
@@ -209,11 +253,17 @@ const ChatbotPage = () => {
                   >
                     <div
                       className={`max-w-[80%] p-4 rounded-lg ${message.type === "user"
-                        ? "bg-primary text-white"
-                        : "bg-gray-100"
+                          ? "bg-primary text-white"
+                          : "bg-gray-100"
                         }`}
                     >
-                      <p>{message.content}</p>
+                      {/* New parseMessageWithTimestamps */}
+                      {message.type === "bot" 
+                        ? parseMessageWithTimestamps(message.content)
+                        : <p>{message.content}</p>
+                      }
+                      
+                      {/* timestamp button */}
                       {message.timestamp && (
                         <Button
                           variant="secondary"
@@ -265,11 +315,11 @@ const ChatbotPage = () => {
           <Card className="w-96">
             <div className="aspect-video bg-gray-100 relative">
               {selectedVideo && currentVideo?.video_url ? (
-                <video
-                  ref={videoRef}
-                  id="video-preview"
-                  key={selectedVideo}
-                  controls
+                <video 
+                  ref={videoRef} 
+                  id="video-preview" 
+                  key={selectedVideo} 
+                  controls 
                   className="w-full h-full"
                 >
                   <source src={currentVideo.video_url} type="video/mp4" />
