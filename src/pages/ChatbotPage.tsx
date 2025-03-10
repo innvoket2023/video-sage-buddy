@@ -38,7 +38,10 @@ const ChatbotPage = () => {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const API_URL = import.meta.env._API_URL || "http://127.0.0.1:5000";
+
+  // Fetch API URL from Vite environment variable
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Fetch videos when the component mounts
   useEffect(() => {
     const fetchVideos = async () => {
@@ -366,58 +369,3 @@ const ChatbotPage = () => {
                   key={currentVideo.publicID}
                   controls
                   className="w-full h-full"
-                >
-                  <source src={currentVideo.video_url} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  {selectedVideo ? (
-                    <>
-                      <Film className="h-16 w-16 text-gray-400 mb-2" />
-                      <p className="text-gray-500 font-medium">
-                        Video loading or unavailable
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        {selectedVideo === "all"
-                          ? "Ask a question to see a relevant video"
-                          : `Selected: ${selectedVideo}`}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-gray-400">No video selected</p>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="p-4">
-              {currentVideo ? (
-                <>
-                  <h3 className="font-medium">{currentVideo.publicID}</h3>
-                  {currentVideo.description && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {currentVideo.description}
-                    </p>
-                  )}
-                  {selectedVideo === "all" && previewVideoId && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Showing video relevant to your query
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="text-gray-500">
-                  {selectedVideo === "all"
-                    ? "Ask a question to see a relevant video"
-                    : "Please select a video from the dropdown"}
-                </p>
-              )}
-            </div>
-          </Card>
-        </div>
-      </div>
-    </DashboardLayout>
-  );
-};
-
-export default ChatbotPage;
