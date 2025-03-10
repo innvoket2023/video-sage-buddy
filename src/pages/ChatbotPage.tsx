@@ -38,13 +38,13 @@ const ChatbotPage = () => {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-
+  const API_URL = import.meta.env._API_URL || "http://127.0.0.1:5000";
   // Fetch videos when the component mounts
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         // Get video list with full details
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/preview`);
+        const response = await axios.get(`${API_URL}/preview`);
         console.log("Videos response:", response.data);
         setVideos(response.data.videos || []);
       } catch (error) {
@@ -100,39 +100,23 @@ const ChatbotPage = () => {
     }
   }, [previewVideoId, videos]);
 
-  // Parse message content for timestamps
+  //^ Parse message content for timestamps
   const parseMessageWithTimestamps = (content: string) => {
-    const timestampRegex =
-      /(?:\[|\(|at\s+|time\s+|timestamp\s+)(\d{1,2}:\d{2}(?::\d{2})?)(?:\]|\)|,|\s)/gi;
-
-    const matches = [...content.matchAll(timestampRegex)];
-
-    if (matches.length === 0) {
-      return <p>{content}</p>;
-    }
-
+    const timestampRegex = /\[(\d{2}:\d{2}:\d{2})\]/g;
     const timestamps: string[] = [];
-
-    matches.forEach((match) => {
-      const [_, timestamp] = match;
-      if (timestamp && !timestamps.includes(timestamp)) {
+    let match;
+    while ((match = timestampRegex.exec(content)) !== null) {
+      console.log("match : " + match);
+      const timestamp = match[1];
+      if (!timestamps.includes(timestamp)) {
         timestamps.push(timestamp);
       }
-    });
-
-    let plainTextContent = content;
-    matches.forEach((match) => {
-      const [fullMatch] = match;
-      const startIndex = match.index || 0;
-      plainTextContent =
-        plainTextContent.substring(0, startIndex) +
-        fullMatch +
-        plainTextContent.substring(startIndex + fullMatch.length);
-    });
+    }
+    const finalContent = content.replace(timestampRegex, "");
 
     return (
       <>
-        <p>{plainTextContent}</p>
+        <p>{finalContent}</p>
         {timestamps.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {timestamps.map((timestamp, index) => (
@@ -179,18 +163,22 @@ const ChatbotPage = () => {
 
     try {
       // Query the backend with the selected video name
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/query`, {
-        query: input,
-        video_name: selectedVideo
-      }, {
-        params: {
+      const response = await axios.post(
+        `${API_URL}/query`,
+        {
           query: input,
-          video_name: selectedVideo
+          video_name: selectedVideo,
         },
-        headers: {
-          'Content-Type': 'application/json'
+        {
+          params: {
+            query: input,
+            video_name: selectedVideo,
+          },
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      })
+      );
       const results = response.data.results;
 
       // Add bot response
@@ -296,14 +284,16 @@ const ChatbotPage = () => {
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex ${message.type === "user" ? "justify-end" : "justify-start"
-                      }`}
+                    className={`flex ${
+                      message.type === "user" ? "justify-end" : "justify-start"
+                    }`}
                   >
                     <div
-                      className={`max-w-[80%] p-4 rounded-lg ${message.type === "user"
+                      className={`max-w-[80%] p-4 rounded-lg ${
+                        message.type === "user"
                           ? "bg-primary text-white"
                           : "bg-gray-100"
-                        }`}
+                      }`}
                     >
                       {/* New parseMessageWithTimestamps */}
                       {message.type === "bot" ? (
@@ -347,10 +337,11 @@ const ChatbotPage = () => {
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={
                       selectedVideo
-                        ? `Ask a question about "${selectedVideo === "all"
-                          ? "all videos"
-                          : selectedVideo
-                        }"...`
+                        ? `Ask a question about "${
+                            selectedVideo === "all"
+                              ? "all videos"
+                              : selectedVideo
+                          }"...`
                         : "Please select a video first..."
                     }
                     className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"

@@ -70,17 +70,21 @@ const VideoUploadDialog = ({ open, setOpen }) => {
       }
 
       // Upload to Cloudinary with progress tracking
-      const cloudinaryResponse = await axios.post(CLOUDINARY_UPLOAD_URL, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 50) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        },
-      });
+      const cloudinaryResponse = await axios.post(
+        CLOUDINARY_UPLOAD_URL,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 50) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
 
       setUploadProgress(60);
 
@@ -96,10 +100,10 @@ const VideoUploadDialog = ({ open, setOpen }) => {
         video_url: videoUrl,
         public_id: videoTitle, // Use the title we set earlier
         title: videoTitle,
-        description: description.trim()
+        description: description.trim(),
       };
 
-      const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+      const API_URL = import.meta.env._API_URL || "http://127.0.0.1:5000";
       const uploadResponse = await axios.post(
         `${API_URL}/upload-and-store`,
         backendData,
@@ -109,9 +113,9 @@ const VideoUploadDialog = ({ open, setOpen }) => {
           },
           onUploadProgress: (progressEvent) => {
             // This only tracks the upload of our request, not the processing time
-            const percentCompleted = 60 + Math.round(
-              (progressEvent.loaded * 10) / progressEvent.total
-            );
+            const percentCompleted =
+              60 +
+              Math.round((progressEvent.loaded * 10) / progressEvent.total);
             setUploadProgress(percentCompleted);
           },
         }
@@ -213,7 +217,9 @@ const VideoUploadDialog = ({ open, setOpen }) => {
                     disabled={uploading}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    {title.trim() ? `Using custom title: "${title}"` : `Using filename: "${selectedFile.name}"`}
+                    {title.trim()
+                      ? `Using custom title: "${title}"`
+                      : `Using filename: "${selectedFile.name}"`}
                   </p>
                 </div>
 

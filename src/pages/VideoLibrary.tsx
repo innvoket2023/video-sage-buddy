@@ -9,10 +9,10 @@ import VideoUploadDialog from "@/components/VideoUploadDialog";
 const VideoLibrary = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [videos, setVideos] = useState([]);
-
+  const API_URL = import.meta.env._API_URL || "http://127.0.0.1:5000";
   const fetchVideos = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/videos`);
+      const response = await axios.get(`${API_URL}/videos`);
       const fetchedVideos = response.data.videos.map((videoName, index) => ({
         id: videos.length + index + 1,
         title: videoName,
@@ -132,4 +132,3 @@ const VideoLibrary = () => {
 };
 
 export default VideoLibrary;
-
