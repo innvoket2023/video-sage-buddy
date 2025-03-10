@@ -38,15 +38,14 @@ const ChatbotPage = () => {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
 
   // Fetch videos when the component mounts
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         // Get video list with full details
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/preview`
-        );
+        const response = await axios.get(`${API_URL}/preview`);
         console.log("Videos response:", response.data);
         setVideos(response.data.videos || []);
       } catch (error) {
@@ -166,7 +165,7 @@ const ChatbotPage = () => {
     try {
       // Query the backend with the selected video name
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/query`,
+        `${API_URL}/query`,
         {
           query: input,
           video_name: selectedVideo,
