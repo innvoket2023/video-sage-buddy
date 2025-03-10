@@ -6,30 +6,37 @@ import { Upload, Search, Filter, MoreVertical } from "lucide-react";
 import axios from "axios";
 import VideoUploadDialog from "@/components/VideoUploadDialog";
 
+const parseThumbnailUrl = (videoUrl) => {
+  if (!videoUrl) return "/placeholder.svg";
+  const lastDotIndex = videoUrl.lastIndexOf(".");
+  const reqIndex = videoUrl.lastIndexOf("/v");
+  if (lastDotIndex === -1) return videoUrl;
+  let finalUrl = videoUrl.substring(0, lastDotIndex) + ".jpg";
+  finalUrl =
+    finalUrl.slice(0, reqIndex) + "/c_fill/so_auto" + finalUrl.slice(reqIndex);
+  return finalUrl;
+};
+
 const VideoLibrary = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [videos, setVideos] = useState([]);
-
+  const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
   const fetchVideos = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/videos`);
-      const fetchedVideos = response.data.videos.map((videoName, index) => ({
-        id: videos.length + index + 1,
-        title: videoName,
-        thumbnail: "/placeholder.svg",
-        date: new Date().toISOString().split("T")[0], // Today's date
-        status: "Processed",
-      }));
+      const response = await axios.get(`${API_URL}/preview`);
+      if (response.data.videos && Array.isArray(response.data.videos)) {
+        const fetchedVideos = response.data.videos.map((video, index) => ({
+          id: index + 1,
+          title: video.publicID || "Untitled Video",
+          description: video.description || "",
+          thumbnail: parseThumbnailUrl(video.video_url),
+          videoUrl: video.video_url,
+          date: new Date().toISOString().split("T")[0], // Today's date
+          status: video.processed ? "Processed" : "Processing",
+        }));
 
-      // Combine existing videos with new ones
-      setVideos((prevVideos) => {
-        // Filter out any duplicates based on title
-        const existingTitles = new Set(prevVideos.map((v) => v.title));
-        const newVideos = fetchedVideos.filter(
-          (v) => !existingTitles.has(v.title)
-        );
-        return [...prevVideos, ...newVideos];
-      });
+        setVideos(fetchedVideos);
+      }
     } catch (error) {
       console.error("Error fetching videos:", error);
     }
@@ -79,42 +86,48 @@ const VideoLibrary = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {videos.map((video) => (
-            <Card
-              key={video.id}
-              className="overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              <div className="aspect-video bg-gray-100 relative">
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-medium">{video.title}</h3>
-                    <p className="text-sm text-gray-600">{video.date}</p>
+          {videos.length > 0 ? (
+            videos.map((video) => (
+              <Card
+                key={video.id}
+                className="overflow-hidden hover:shadow-lg transition-shadow"
+              >
+                <div className="aspect-video bg-gray-100 relative">
+                  <img
+                    src={video.thumbnail}
+                    alt={video.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-medium">{video.title}</h3>
+                      <p className="text-sm text-gray-600">{video.date}</p>
+                    </div>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                  <div className="mt-2">
+                    <span
+                      className={`text-sm px-2 py-1 rounded ${
+                        video.status === "Processed"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-yellow-100 text-yellow-700"
+                      }`}
+                    >
+                      {video.status}
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <span
-                    className={`text-sm px-2 py-1 rounded ${
-                      video.status === "Processed"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-yellow-100 text-yellow-700"
-                    }`}
-                  >
-                    {video.status}
-                  </span>
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-3 text-center py-8 text-gray-500">
+              No videos found. Upload a video to get started.
+            </div>
+          )}
         </div>
       </div>
 
@@ -132,4 +145,3 @@ const VideoLibrary = () => {
 };
 
 export default VideoLibrary;
-
