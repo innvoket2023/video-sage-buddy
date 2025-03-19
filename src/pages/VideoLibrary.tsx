@@ -25,11 +25,11 @@ const DropdownMenu = ({ top, left, onDelete, dropdownRef }) => {
   return createPortal(
     <div
       ref={dropdownRef}
-      className="fixed rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+      className="fixed rounded-md shadow-lg bg-white hover:bg-gray-100 ring-1 ring-black ring-opacity-5 z-50"
       style={{ top, left, width: "140px" }}
     >
       <div
-        className="py-2 px-4 flex items-center gap-2 hover:bg-gray-100 cursor-pointer"
+        className="py-2 px-4 flex items-center gap-2  cursor-pointer"
         role="menu"
         aria-orientation="vertical"
         onClick={onDelete}
@@ -52,6 +52,9 @@ const VideoLibrary = () => {
     title: "",
     videoUrl: "",
   });
+  const [filteredVideos, setFilteredVideos] = useState([]);
+  const [videoNotFound, setVideoNotFound] = useState("");
+  const [searching, setSearching] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
   const dropdownRef = useRef(null);
@@ -159,7 +162,17 @@ const VideoLibrary = () => {
     setSelectedVideo({ title: video.title, videoUrl: video.videoUrl });
     setVideoPlayerOpen(true);
   };
-
+  const handleSearch = (e) => {
+    setSearching(true);
+    const searchWord = e.target.value.toLowerCase();
+    const relatedVideos = videos.filter((video) =>
+      video.title.toLowerCase().includes(searchWord)
+    );
+    setFilteredVideos(relatedVideos);
+    if (relatedVideos.length === 0) {
+      setVideoNotFound(`No videos found with the name "${searchWord}".`);
+    }
+  };
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -183,6 +196,9 @@ const VideoLibrary = () => {
               type="text"
               placeholder="Search videos..."
               className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(event) => {
+                handleSearch(event);
+              }}
             />
           </div>
           <Button variant="outline">
@@ -191,41 +207,81 @@ const VideoLibrary = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           {videos.length > 0 ? (
-            videos.map((video) => (
-              <Card
-                key={video.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => handleVideoClick(video)}
-              >
-                <div className="aspect-video bg-gray-100 relative">
-                  <img
-                    src={video.thumbnail}
-                    alt={video.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium">{video.title}</h3>
-                      <p className="text-sm text-gray-600">{video.date}</p>
-                    </div>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        ref={(el) => (buttonRefs.current[video.id] = el)}
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleMoreClick(video.id, e)}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
+            filteredVideos.length > 0 ? (
+              filteredVideos.map((video) => (
+                <Card
+                  key={video.id}
+                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => handleVideoClick(video)}
+                >
+                  <div className="aspect-video bg-gray-100 relative">
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-medium">{video.title}</h3>
+                        <p className="text-sm text-gray-600">{video.date}</p>
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          ref={(el) => (buttonRefs.current[video.id] = el)}
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => handleMoreClick(video.id, e)}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))
+                </Card>
+              ))
+            ) : searching && videoNotFound !== "" ? (
+              <div className="col-span-3 flex items-center justify-center py-8">
+                <p className="text-center text-lg">{videoNotFound}</p>
+              </div>
+            ) : (
+              videos.map((video) => (
+                <Card
+                  key={video.id}
+                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => handleVideoClick(video)}
+                >
+                  <div className="aspect-video bg-gray-100 relative">
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-medium">{video.title}</h3>
+                        <p className="text-sm text-gray-600">{video.date}</p>
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          ref={(el) => (buttonRefs.current[video.id] = el)}
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => handleMoreClick(video.id, e)}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )
           ) : (
             <div className="col-span-3 text-center py-8 text-gray-500">
               No videos found. Upload a video to get started.
