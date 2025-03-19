@@ -70,17 +70,21 @@ const VideoUploadDialog = ({ open, setOpen }) => {
       }
 
       // Upload to Cloudinary with progress tracking
-      const cloudinaryResponse = await axios.post(CLOUDINARY_UPLOAD_URL, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 50) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        },
-      });
+      const cloudinaryResponse = await axios.post(
+        CLOUDINARY_UPLOAD_URL,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 50) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
 
       setUploadProgress(60);
 
@@ -96,10 +100,10 @@ const VideoUploadDialog = ({ open, setOpen }) => {
         video_url: videoUrl,
         public_id: videoTitle, // Use the title we set earlier
         title: videoTitle,
-        description: description.trim()
+        description: description.trim(),
       };
 
-      const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+      const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
       const uploadResponse = await axios.post(
         `${API_URL}/upload-and-store`,
         backendData,
@@ -109,9 +113,9 @@ const VideoUploadDialog = ({ open, setOpen }) => {
           },
           onUploadProgress: (progressEvent) => {
             // This only tracks the upload of our request, not the processing time
-            const percentCompleted = 60 + Math.round(
-              (progressEvent.loaded * 10) / progressEvent.total
-            );
+            const percentCompleted =
+              60 +
+              Math.round((progressEvent.loaded * 10) / progressEvent.total);
             setUploadProgress(percentCompleted);
           },
         }
@@ -153,7 +157,7 @@ const VideoUploadDialog = ({ open, setOpen }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md md:max-w-lg">
+      <DialogContent className="sm:max-w-md md:max-w-lg overflow-hidden">
         <DialogHeader>
           <DialogTitle>Upload Video</DialogTitle>
           <DialogDescription>Add a new video to your library</DialogDescription>
@@ -183,11 +187,13 @@ const VideoUploadDialog = ({ open, setOpen }) => {
               />
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg">
+            <div className="space-y-4 overflow-hidden">
+              <div className="flex max-w-[460px] items-center p-4 bg-gray-50 rounded-lg overflow-hidden">
                 <FileVideo className="h-8 w-8 text-blue-500 mr-3" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{selectedFile.name}</p>
+                  <p className="font-medium truncate overflow-hidden">
+                    {selectedFile.name}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
                   </p>
@@ -207,13 +213,16 @@ const VideoUploadDialog = ({ open, setOpen }) => {
                   <Label htmlFor="title">Title (Optional)</Label>
                   <Input
                     id="title"
+                    className="max-w-[460px]"
                     placeholder="Enter video title or leave blank to use filename"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     disabled={uploading}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {title.trim() ? `Using custom title: "${title}"` : `Using filename: "${selectedFile.name}"`}
+                  <p className="text-xs text-gray-500 mt-1 max-w-[460px]">
+                    {title.trim()
+                      ? `Using custom title: "${title}"`
+                      : `Using filename: "${selectedFile.name}"`}
                   </p>
                 </div>
 
@@ -222,7 +231,7 @@ const VideoUploadDialog = ({ open, setOpen }) => {
                   <Textarea
                     id="description"
                     placeholder="Add a description"
-                    className="resize-none h-20"
+                    className="resize-none h-20 max-w-[460px]"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     disabled={uploading}
@@ -250,7 +259,7 @@ const VideoUploadDialog = ({ open, setOpen }) => {
           )}
         </div>
 
-        <DialogFooter className="sm:justify-between">
+        <DialogFooter className="sm:justify-between max-w-[460px]">
           <Button
             type="button"
             variant="ghost"
