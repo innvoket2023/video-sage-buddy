@@ -54,6 +54,7 @@ const ChatbotPage = () => {
     };
 
     fetchVideos();
+    console.log(videos);
   }, []);
 
   // Update preview video ID when selection changes

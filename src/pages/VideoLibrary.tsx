@@ -1,15 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, Search, Filter, MoreVertical } from "lucide-react";
+import { Upload, Search, Filter, MoreVertical, Trash2 } from "lucide-react";
 import axios from "axios";
 import VideoUploadDialog from "@/components/VideoUploadDialog";
+import VideoPlayerDialog from "@/components/VideoPlayerDialog";
 
 const parseThumbnailUrl = (videoUrl) => {
   if (!videoUrl) return "/placeholder.svg";
   const lastDotIndex = videoUrl.lastIndexOf(".");
-  const reqIndex = videoUrl.lastIndexOf("/v");
+  const versionRegex = /\/v\d+/g;
+  const versionResult = videoUrl.match(versionRegex);
+  const reqIndex = videoUrl.lastIndexOf(versionResult);
   if (lastDotIndex === -1) return videoUrl;
   let finalUrl = videoUrl.substring(0, lastDotIndex) + ".jpg";
   finalUrl =
@@ -17,10 +21,42 @@ const parseThumbnailUrl = (videoUrl) => {
   return finalUrl;
 };
 
+const DropdownMenu = ({ top, left, onDelete, dropdownRef }) => {
+  return createPortal(
+    <div
+      ref={dropdownRef}
+      className="fixed rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+      style={{ top, left, width: "140px" }}
+    >
+      <div
+        className="py-2 px-4 flex items-center gap-2 hover:bg-gray-100 cursor-pointer"
+        role="menu"
+        aria-orientation="vertical"
+        onClick={onDelete}
+      >
+        <Trash2 className="h-4 w-4 text-red-500" />
+        <span className="text-sm">Delete</span>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 const VideoLibrary = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [videos, setVideos] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState({
+    title: "",
+    videoUrl: "",
+  });
+
   const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
+  const dropdownRef = useRef(null);
+  const buttonRefs = useRef({});
+
   const fetchVideos = async () => {
     try {
       const response = await axios.get(`${API_URL}/preview`);
@@ -50,9 +86,79 @@ const VideoLibrary = () => {
     fetchVideos();
   };
 
+  const updateDropdownPosition = () => {
+    if (showDropdown !== null && buttonRefs.current[showDropdown]) {
+      const buttonElement = buttonRefs.current[showDropdown];
+      const rect = buttonElement.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom,
+        left: rect.right - 140,
+      });
+    }
+  };
+
+  const handleMoreClick = (videoId, event) => {
+    event.stopPropagation();
+
+    if (showDropdown === videoId) {
+      setShowDropdown(null);
+      return;
+    }
+
+    const buttonElement = buttonRefs.current[videoId];
+    if (buttonElement) {
+      const rect = buttonElement.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom,
+        left: rect.right - 140,
+      });
+      setShowDropdown(videoId);
+    }
+  };
+
+  const handleDeleteVideo = async () => {
+    try {
+      await axios.delete(`${API_URL}/delete-video`, {
+        data: {},
+      });
+
+      setShowDropdown(null);
+      fetchVideos();
+    } catch (error) {
+      console.error("Error deleting video:", error);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(null);
+      }
+    };
+
+    const handleScroll = () => {
+      updateDropdownPosition();
+    };
+
+    if (showDropdown !== null) {
+      document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [showDropdown]);
+
   useEffect(() => {
     fetchVideos();
   }, []);
+
+  const handleVideoClick = (video) => {
+    setSelectedVideo({ title: video.title, videoUrl: video.videoUrl });
+    setVideoPlayerOpen(true);
+  };
 
   return (
     <DashboardLayout>
@@ -90,7 +196,8 @@ const VideoLibrary = () => {
             videos.map((video) => (
               <Card
                 key={video.id}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => handleVideoClick(video)}
               >
                 <div className="aspect-video bg-gray-100 relative">
                   <img
@@ -105,20 +212,16 @@ const VideoLibrary = () => {
                       <h3 className="font-medium">{video.title}</h3>
                       <p className="text-sm text-gray-600">{video.date}</p>
                     </div>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="mt-2">
-                    <span
-                      className={`text-sm px-2 py-1 rounded ${
-                        video.status === "Processed"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {video.status}
-                    </span>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        ref={(el) => (buttonRefs.current[video.id] = el)}
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => handleMoreClick(video.id, e)}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -131,6 +234,16 @@ const VideoLibrary = () => {
         </div>
       </div>
 
+      {/* dropdown menu */}
+      {showDropdown !== null && (
+        <DropdownMenu
+          top={dropdownPosition.top}
+          left={dropdownPosition.left}
+          onDelete={handleDeleteVideo}
+          dropdownRef={dropdownRef}
+        />
+      )}
+
       <VideoUploadDialog
         open={uploadDialogOpen}
         setOpen={(isOpen) => {
@@ -139,6 +252,12 @@ const VideoLibrary = () => {
             handleUploadComplete();
           }
         }}
+      />
+      <VideoPlayerDialog
+        open={videoPlayerOpen}
+        setOpen={setVideoPlayerOpen}
+        videoTitle={selectedVideo.title}
+        videoUrl={selectedVideo.videoUrl}
       />
     </DashboardLayout>
   );
