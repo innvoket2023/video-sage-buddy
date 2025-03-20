@@ -3,7 +3,24 @@ import { createPortal } from "react-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, Search, Filter, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Upload,
+  Search,
+  Filter,
+  MoreVertical,
+  Trash2,
+  Clock,
+  CalendarDays,
+} from "lucide-react";
 import axios from "axios";
 import VideoUploadDialog from "@/components/VideoUploadDialog";
 import VideoPlayerDialog from "@/components/VideoPlayerDialog";
@@ -59,6 +76,7 @@ const VideoLibrary = () => {
   const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
   const dropdownRef = useRef(null);
   const buttonRefs = useRef({});
+  const filterRef = useRef(null);
 
   const fetchVideos = async () => {
     try {
@@ -147,7 +165,6 @@ const VideoLibrary = () => {
       document.addEventListener("mousedown", handleClickOutside);
       window.addEventListener("scroll", handleScroll);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener("scroll", handleScroll);
@@ -171,6 +188,16 @@ const VideoLibrary = () => {
     setFilteredVideos(relatedVideos);
     if (relatedVideos.length === 0) {
       setVideoNotFound(`No videos found with the name "${searchWord}".`);
+    }
+  };
+
+  const [selectedFilter, setSelectedFilter] = useState(null);
+
+  const handleFilterChange = (value) => {
+    if (value === "reset") {
+      setSelectedFilter(null);
+    } else {
+      setSelectedFilter(value);
     }
   };
   return (
@@ -201,10 +228,42 @@ const VideoLibrary = () => {
               }}
             />
           </div>
-          <Button variant="outline">
+          {/* <Button variant="outline" onClick={handleFilterClick} ref={filterRef}>
             <Filter className="h-4 w-4 mr-2" />
             Filters
-          </Button>
+          </Button> */}
+          <Select value={selectedFilter} onValueChange={handleFilterChange}>
+            <SelectTrigger className="w-fit flex items-center justify-center gap-1">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filter By" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {/* Reset Option */}
+                <SelectItem value="reset">
+                  <div className="flex items-center w-full h-full">
+                    <span className="text-sm text-gray-500">Clear Filter</span>
+                  </div>
+                </SelectItem>
+
+                {/* Duration Option */}
+                <SelectItem value="duration">
+                  {/* <div className="flex items-center w-full h-full"> */}
+                  {/* <Clock className="h-4 w-4 mr-2" /> */}
+                  Duration
+                  {/* </div> */}
+                </SelectItem>
+
+                {/* Most Recent Option */}
+                <SelectItem value="recent">
+                  {/* <div className="flex items-center w-full h-full gap-1"> */}
+                  {/* <CalendarDays className="h-4 w-4 mr-2" /> */}
+                  Most Recent
+                  {/* </div> */}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">

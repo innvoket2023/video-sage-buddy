@@ -1,18 +1,17 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, Mail, Lock } from "lucide-react";
+import { ArrowRight, User, Lock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-
+import { signIn } from "@/services/api";
 const SignIn = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast({
@@ -22,12 +21,30 @@ const SignIn = () => {
       });
       return;
     }
-    // For now, just redirect to dashboard
-    toast({
-      title: "Success",
-      description: "Welcome back!",
-    });
-    navigate("/dashboard");
+
+    try {
+      const response = await signIn(email, password);
+
+      if (response.error) {
+        toast({
+          title: "Error",
+          description: response.error || "Invalid credentials",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Welcome back!",
+        });
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Invalid credentials",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -35,31 +52,38 @@ const SignIn = () => {
       <div className="w-full max-w-md p-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">Welcome back</h1>
-          <p className="text-gray-600 mt-2">Sign in to your VideoSage account</p>
+          <p className="text-gray-600 mt-2">
+            Sign in to your VideoSage account
+          </p>
         </div>
 
         <Card>
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email address
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Username or email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
                     id="email"
-                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Enter your email"
+                    placeholder="Enter Username or Email"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -83,7 +107,11 @@ const SignIn = () => {
             <div className="text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
-                <Button variant="link" onClick={() => navigate("/signup")} className="p-0">
+                <Button
+                  variant="link"
+                  onClick={() => navigate("/signup")}
+                  className="p-0"
+                >
                   Sign up
                 </Button>
               </p>

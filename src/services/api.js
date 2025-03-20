@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5000"; // Replace with your Flask server URL
+const API_BASE_URL = "http://localhost:5000/api"; // Replace with your Flask server URL
 
 export const uploadVideo = async (file) => {
   const formData = new FormData();
@@ -41,5 +41,43 @@ export const queryVideo = async (query) => {
   } catch (error) {
     console.error("Error querying video:", error);
     throw error;
+  }
+};
+
+export const signUp = async (userName, email, password) => {
+  if (userName && email && password) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/signup`, {
+        username: userName,
+        email,
+        password,
+      });
+      console.log(response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error in sign up");
+      throw error;
+    }
+  } else {
+    console.log("All fields are required");
+  }
+};
+
+export const signIn = async (user, password) => {
+  if (user && password) {
+    try {
+      const loginData = user.includes("@")
+        ? { email: user, password }
+        : { username: user, password };
+
+      const response = await axios.post(`${API_BASE_URL}/login`, loginData);
+
+      console.log(response.data);
+      return response.data;
+    } catch (error) {
+      console.log(error);
+    }
+  } else {
+    console.log("All fields are required");
   }
 };
