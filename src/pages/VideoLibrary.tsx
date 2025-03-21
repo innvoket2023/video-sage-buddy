@@ -80,7 +80,9 @@ const VideoLibrary = () => {
 
   const fetchVideos = async () => {
     try {
-      const response = await axios.get(`${API_URL}/preview`);
+      const response = await axios.get(`${API_URL}/preview`, {
+        withCredentials: true,
+      });
       if (response.data.videos && Array.isArray(response.data.videos)) {
         const fetchedVideos = response.data.videos.map((video, index) => ({
           id: index + 1,
@@ -141,6 +143,7 @@ const VideoLibrary = () => {
     try {
       await axios.delete(`${API_URL}/delete-video`, {
         data: {},
+        withCredentials: true,
       });
 
       setShowDropdown(null);

@@ -47,11 +47,17 @@ const API_BASE_URL = "http://localhost:5000/api"; // Replace with your Flask ser
 export const signUp = async (userName, email, password) => {
   if (userName && email && password) {
     try {
-      const response = await axios.post(`${API_BASE_URL}/signup`, {
-        username: userName,
-        email,
-        password,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/signup`,
+        {
+          username: userName,
+          email,
+          password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
       console.log(response.data);
       return response.data;
     } catch (error) {
@@ -70,7 +76,9 @@ export const signIn = async (user, password) => {
         ? { email: user, password }
         : { username: user, password };
 
-      const response = await axios.post(`${API_BASE_URL}/login`, loginData);
+      const response = await axios.post(`${API_BASE_URL}/login`, loginData, {
+        withCredentials: true,
+      });
 
       console.log(response.data);
       return response.data;

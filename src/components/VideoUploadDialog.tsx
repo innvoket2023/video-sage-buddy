@@ -118,6 +118,7 @@ const VideoUploadDialog = ({ open, setOpen }) => {
               Math.round((progressEvent.loaded * 10) / progressEvent.total);
             setUploadProgress(percentCompleted);
           },
+          withCredentials: true,
         }
       );
 

@@ -45,7 +45,9 @@ const ChatbotPage = () => {
     const fetchVideos = async () => {
       try {
         // Get video list with full details
-        const response = await axios.get(`${API_URL}/preview`);
+        const response = await axios.get(`${API_URL}/preview`, {
+          withCredentials: true,
+        });
         console.log("Videos response:", response.data);
         setVideos(response.data.videos || []);
       } catch (error) {
@@ -179,6 +181,7 @@ const ChatbotPage = () => {
           headers: {
             "Content-Type": "application/json",
           },
+          withCredentials: true,
         }
       );
       const results = response.data.results;
