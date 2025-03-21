@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, Mail, Lock, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { signUp } from "@/services/api";
+import { signUp } from "@/api/authApi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signUpSchema } from "@/schema/auth";
@@ -29,9 +29,10 @@ const SignUp = () => {
       await signUp(data.userName, data.email, data.password);
       toast({
         title: "Success",
-        description: "Account created successfully!",
+        description: "Account created successfully! Activate your account now.",
+        style: { backgroundColor: "green", color: "white" },
       });
-      navigate("/dashboard");
+      navigate("/signin");
     } catch (error) {
       toast({
         title: "Error",
