@@ -3,7 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Send, Play, Film } from "lucide-react";
-import axios from "axios";
+import { fetchVideos, queryVideo } from "@/api/chatbotApi"; // Import API functions
 
 // Define the message type
 type Message = {
@@ -38,31 +38,22 @@ const ChatbotPage = () => {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
 
   // Fetch videos when the component mounts
   useEffect(() => {
-    const fetchVideos = async () => {
+    const loadVideos = async () => {
       try {
-        // Get video list with full details
-        const response = await axios.get(`${API_URL}/preview`, {
-          withCredentials: true,
-        });
-        console.log("Videos response:", response.data);
-        setVideos(response.data.videos || []);
+        const fetchedVideos = await fetchVideos();
+        setVideos(fetchedVideos);
       } catch (error) {
-        console.error("Error fetching videos:", error);
+        console.error("Error loading videos:", error);
       }
     };
-
-    fetchVideos();
-    console.log(videos);
+    loadVideos();
   }, []);
 
   // Update preview video ID when selection changes
   useEffect(() => {
-    console.log(selectedVideo);
-
     if (selectedVideo) {
       if (selectedVideo === "all") {
         setPreviewVideoId("");
@@ -85,20 +76,13 @@ const ChatbotPage = () => {
     }
   }, [selectedVideo]);
 
+  // Update current video details when previewVideoId changes
   useEffect(() => {
-    console.log(previewVideoId);
-
     if (previewVideoId) {
       const videoDetails = videos.find(
         (video) => video.publicID === previewVideoId
       );
-
-      if (videoDetails) {
-        console.log(videoDetails);
-        setCurrentVideo(videoDetails);
-      } else {
-        setCurrentVideo(null);
-      }
+      setCurrentVideo(videoDetails || null);
     } else {
       setCurrentVideo(null);
     }
@@ -110,7 +94,6 @@ const ChatbotPage = () => {
     const timestamps: string[] = [];
     let match;
     while ((match = timestampRegex.exec(content)) !== null) {
-      console.log("match : " + match);
       const timestamp = match[1];
       if (!timestamps.includes(timestamp)) {
         timestamps.push(timestamp);
@@ -140,6 +123,7 @@ const ChatbotPage = () => {
     );
   };
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -160,37 +144,17 @@ const ChatbotPage = () => {
 
     // Add user message
     setMessages([...messages, { type: "user", content: input }]);
-    // Clear input
     setInput("");
-
     setLoading(true);
 
     try {
       // Query the backend with the selected video name
-      const response = await axios.post(
-        `${API_URL}/query`,
-        {
-          query: input,
-          video_name: selectedVideo,
-        },
-        {
-          params: {
-            query: input,
-            video_name: selectedVideo,
-          },
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-      const results = response.data.results;
+      const response = await queryVideo(input, selectedVideo);
+      const results = response.results;
 
       // Add bot response
       if (results.length > 0) {
-        //^ All selected Case
         if (selectedVideo === "all" && results[0].source) {
-          console.log(results[0].source);
           setPreviewVideoId(results[0].source);
         }
 
@@ -226,13 +190,12 @@ const ChatbotPage = () => {
     }
   };
 
+  // Handle playing video at a specific timestamp
   const handlePlayAtTimestamp = (timestamp: string) => {
     if (videoRef.current && timestamp) {
-      // Convert timestamp (like "1:30" or "01:30:45") to seconds
       const parts = timestamp.split(":").map(Number);
       let seconds = 0;
 
-      // Handle different timestamp formats (HH:MM:SS or MM:SS or SS)
       if (parts.length === 3) {
         seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
       } else if (parts.length === 2) {
@@ -241,7 +204,6 @@ const ChatbotPage = () => {
         seconds = parts[0];
       }
 
-      // Set video time and play
       videoRef.current.currentTime = seconds;
       videoRef.current.play().catch((err) => {
         console.error("Error playing video:", err);
@@ -249,10 +211,9 @@ const ChatbotPage = () => {
     }
   };
 
-  //^ handler for video selection changes
+  // Handle video selection changes
   const handleVideoSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSelection = e.target.value;
-    setSelectedVideo(newSelection);
+    setSelectedVideo(e.target.value);
   };
 
   return (
@@ -300,14 +261,12 @@ const ChatbotPage = () => {
                           : "bg-gray-100"
                       }`}
                     >
-                      {/* New parseMessageWithTimestamps */}
                       {message.type === "bot" ? (
                         parseMessageWithTimestamps(message.content)
                       ) : (
                         <p>{message.content}</p>
                       )}
 
-                      {/* timestamp button */}
                       {message.timestamp && (
                         <Button
                           variant="secondary"

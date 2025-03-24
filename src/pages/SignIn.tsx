@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, User, Lock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { signIn } from "@/services/api";
+import { signIn } from "@/api/authApi";
 const SignIn = () => {
   const navigate = useNavigate();
   const { toast } = useToast();

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { tokenManager } from "./authApi";
 
 const CLOUDINARY_UPLOAD_PRESET = "video_uploads";
 const CLOUDINARY_CLOUD_NAME = "dmumfcdka";
@@ -63,14 +64,18 @@ export const sendToBackend = async (
     description: description.trim(),
   };
 
+  const authHeader = tokenManager.getAuthHeader();
+
   const response = await axios.post(
     `${API_URL}/upload-and-store`,
     backendData,
     {
       headers: {
         "Content-Type": "application/json",
+        ...authHeader, //^ Add JWT authorization header
       },
       onUploadProgress,
+      withCredentials: true,
     }
   );
 

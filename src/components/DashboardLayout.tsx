@@ -1,8 +1,13 @@
-
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Film, MessageSquare, Settings, LogOut } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Film,
+  MessageSquare,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import { signOut } from "@/api/authApi";
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
@@ -10,13 +15,19 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
 
+  const navigate = useNavigate();
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Videos", href: "/videos", icon: Film },
     { name: "Chat", href: "/chat", icon: MessageSquare },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
-
+  const handleLogOut = async () => {
+    const done = await signOut();
+    if (done) {
+      navigate("/");
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
@@ -27,7 +38,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               VideoSage
             </Link>
           </div>
-          
+
           <nav className="flex-1 p-4 space-y-2">
             {navigation.map((item) => (
               <Link
@@ -46,7 +57,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           </nav>
 
           <div className="p-4 border-t">
-            <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleLogOut}
+            >
               <LogOut className="h-5 w-5 mr-3" />
               Log out
             </Button>
@@ -56,9 +71,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Main content */}
       <main className="ml-64 min-h-screen">
-        <div className="p-8">
-          {children}
-        </div>
+        <div className="p-8">{children}</div>
       </main>
     </div>
   );

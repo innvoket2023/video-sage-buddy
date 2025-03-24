@@ -21,22 +21,9 @@ import {
   Clock,
   CalendarDays,
 } from "lucide-react";
-import axios from "axios";
 import VideoUploadDialog from "@/components/VideoUploadDialog";
 import VideoPlayerDialog from "@/components/VideoPlayerDialog";
-
-const parseThumbnailUrl = (videoUrl) => {
-  if (!videoUrl) return "/placeholder.svg";
-  const lastDotIndex = videoUrl.lastIndexOf(".");
-  const versionRegex = /\/v\d+/g;
-  const versionResult = videoUrl.match(versionRegex);
-  const reqIndex = videoUrl.lastIndexOf(versionResult);
-  if (lastDotIndex === -1) return videoUrl;
-  let finalUrl = videoUrl.substring(0, lastDotIndex) + ".jpg";
-  finalUrl =
-    finalUrl.slice(0, reqIndex) + "/c_fill/so_auto" + finalUrl.slice(reqIndex);
-  return finalUrl;
-};
+import { fetchVideos, deleteVideo } from "@/api/videoLibraryApi";
 
 const DropdownMenu = ({ top, left, onDelete, dropdownRef }) => {
   return createPortal(
@@ -46,7 +33,7 @@ const DropdownMenu = ({ top, left, onDelete, dropdownRef }) => {
       style={{ top, left, width: "140px" }}
     >
       <div
-        className="py-2 px-4 flex items-center gap-2  cursor-pointer"
+        className="py-2 px-4 flex items-center gap-2 cursor-pointer"
         role="menu"
         aria-orientation="vertical"
         onClick={onDelete}
@@ -72,41 +59,36 @@ const VideoLibrary = () => {
   const [filteredVideos, setFilteredVideos] = useState([]);
   const [videoNotFound, setVideoNotFound] = useState("");
   const [searching, setSearching] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
   const dropdownRef = useRef(null);
   const buttonRefs = useRef({});
   const filterRef = useRef(null);
 
-  const fetchVideos = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/preview`, {
-        withCredentials: true,
-      });
-      if (response.data.videos && Array.isArray(response.data.videos)) {
-        const fetchedVideos = response.data.videos.map((video, index) => ({
-          id: index + 1,
-          title: video.publicID || "Untitled Video",
-          description: video.description || "",
-          thumbnail: parseThumbnailUrl(video.video_url),
-          videoUrl: video.video_url,
-          date: new Date().toISOString().split("T")[0], // Today's date
-          status: video.processed ? "Processed" : "Processing",
-        }));
-
+  // Fetch videos on component mount
+  useEffect(() => {
+    const loadVideos = async () => {
+      try {
+        const fetchedVideos = await fetchVideos();
         setVideos(fetchedVideos);
+      } catch (error) {
+        console.error("Error loading videos:", error);
       }
-    } catch (error) {
-      console.error("Error fetching videos:", error);
-    }
-  };
+    };
+    loadVideos();
+  }, []);
 
   const handleUploadClick = () => {
     setUploadDialogOpen(true);
   };
 
-  const handleUploadComplete = () => {
-    fetchVideos();
+  const handleUploadComplete = async () => {
+    try {
+      const fetchedVideos = await fetchVideos();
+      setVideos(fetchedVideos);
+    } catch (error) {
+      console.error("Error updating videos after upload:", error);
+    }
   };
 
   const updateDropdownPosition = () => {
@@ -141,13 +123,10 @@ const VideoLibrary = () => {
 
   const handleDeleteVideo = async () => {
     try {
-      await axios.delete(`${API_URL}/delete-video`, {
-        data: {},
-        withCredentials: true,
-      });
-
+      await deleteVideo();
       setShowDropdown(null);
-      fetchVideos();
+      const fetchedVideos = await fetchVideos();
+      setVideos(fetchedVideos);
     } catch (error) {
       console.error("Error deleting video:", error);
     }
@@ -174,14 +153,11 @@ const VideoLibrary = () => {
     };
   }, [showDropdown]);
 
-  useEffect(() => {
-    fetchVideos();
-  }, []);
-
   const handleVideoClick = (video) => {
     setSelectedVideo({ title: video.title, videoUrl: video.videoUrl });
     setVideoPlayerOpen(true);
   };
+
   const handleSearch = (e) => {
     setSearching(true);
     const searchWord = e.target.value.toLowerCase();
@@ -194,8 +170,6 @@ const VideoLibrary = () => {
     }
   };
 
-  const [selectedFilter, setSelectedFilter] = useState(null);
-
   const handleFilterChange = (value) => {
     if (value === "reset") {
       setSelectedFilter(null);
@@ -203,6 +177,7 @@ const VideoLibrary = () => {
       setSelectedFilter(value);
     }
   };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -226,15 +201,9 @@ const VideoLibrary = () => {
               type="text"
               placeholder="Search videos..."
               className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              onChange={(event) => {
-                handleSearch(event);
-              }}
+              onChange={handleSearch}
             />
           </div>
-          {/* <Button variant="outline" onClick={handleFilterClick} ref={filterRef}>
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-          </Button> */}
           <Select value={selectedFilter} onValueChange={handleFilterChange}>
             <SelectTrigger className="w-fit flex items-center justify-center gap-1">
               <Filter className="h-4 w-4 mr-2" />
@@ -242,28 +211,11 @@ const VideoLibrary = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {/* Reset Option */}
                 <SelectItem value="reset">
-                  <div className="flex items-center w-full h-full">
-                    <span className="text-sm text-gray-500">Clear Filter</span>
-                  </div>
+                  <span className="text-sm text-gray-500">Clear Filter</span>
                 </SelectItem>
-
-                {/* Duration Option */}
-                <SelectItem value="duration">
-                  {/* <div className="flex items-center w-full h-full"> */}
-                  {/* <Clock className="h-4 w-4 mr-2" /> */}
-                  Duration
-                  {/* </div> */}
-                </SelectItem>
-
-                {/* Most Recent Option */}
-                <SelectItem value="recent">
-                  {/* <div className="flex items-center w-full h-full gap-1"> */}
-                  {/* <CalendarDays className="h-4 w-4 mr-2" /> */}
-                  Most Recent
-                  {/* </div> */}
-                </SelectItem>
+                <SelectItem value="duration">Duration</SelectItem>
+                <SelectItem value="recent">Most Recent</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -352,7 +304,6 @@ const VideoLibrary = () => {
         </div>
       </div>
 
-      {/* dropdown menu */}
       {showDropdown !== null && (
         <DropdownMenu
           top={dropdownPosition.top}

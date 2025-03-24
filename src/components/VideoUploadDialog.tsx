@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { uploadToCloudinary, sendToBackend } from "@/api/videoUploadApi";
 
 const VideoUploadDialog = ({ open, setOpen }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -21,10 +21,6 @@ const VideoUploadDialog = ({ open, setOpen }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
-
-  const CLOUDINARY_UPLOAD_PRESET = "video_uploads"; // Set your upload preset here
-  const CLOUDINARY_CLOUD_NAME = "dmumfcdka"; // Set your cloud name here
-  const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -56,78 +52,46 @@ const VideoUploadDialog = ({ open, setOpen }) => {
 
     try {
       // First, upload to Cloudinary
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-      formData.append("resource_type", "video");
-
-      // Use filename as title if title is not provided
       const videoTitle = title.trim() || selectedFile.name;
-      formData.append("public_id", videoTitle); // Use title or filename as the public_id
-
-      if (description.trim()) {
-        formData.append("context", `description=${description.trim()}`);
-      }
-
-      // Upload to Cloudinary with progress tracking
-      const cloudinaryResponse = await axios.post(
-        CLOUDINARY_UPLOAD_URL,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 50) / progressEvent.total
-            );
-            setUploadProgress(percentCompleted);
-          },
+      const cloudinaryResponse = await uploadToCloudinary(
+        selectedFile,
+        videoTitle,
+        description,
+        (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 50) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
         }
       );
 
       setUploadProgress(60);
 
       // Get the video URL and ID from Cloudinary
-      const videoUrl = cloudinaryResponse.data.secure_url;
-      const publicId = cloudinaryResponse.data.public_id;
+      const videoUrl = cloudinaryResponse.secure_url;
+      const publicId = cloudinaryResponse.public_id;
 
       console.log("Cloudinary upload successful:", videoUrl);
 
       // Send the video information to our backend for processing
-      // Important: Send as JSON data, not FormData
-      const backendData = {
-        video_url: videoUrl,
-        public_id: videoTitle, // Use the title we set earlier
-        title: videoTitle,
-        description: description.trim(),
-      };
-
-      const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
-      const uploadResponse = await axios.post(
-        `${API_URL}/upload-and-store`,
-        backendData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          onUploadProgress: (progressEvent) => {
-            // This only tracks the upload of our request, not the processing time
-            const percentCompleted =
-              60 +
-              Math.round((progressEvent.loaded * 10) / progressEvent.total);
-            setUploadProgress(percentCompleted);
-          },
-          withCredentials: true,
+      const backendResponse = await sendToBackend(
+        videoUrl,
+        publicId,
+        videoTitle,
+        description,
+        (progressEvent) => {
+          const percentCompleted =
+            60 + Math.round((progressEvent.loaded * 10) / progressEvent.total);
+          setUploadProgress(percentCompleted);
         }
       );
 
       setUploadProgress(95);
-      console.log("Backend processing result:", uploadResponse.data);
+      console.log("Backend processing result:", backendResponse);
 
       // If backend response includes a transcript
-      if (uploadResponse.data.transcript) {
-        console.log("Video transcript:", uploadResponse.data.transcript);
+      if (backendResponse.transcript) {
+        console.log("Video transcript:", backendResponse.transcript);
       }
 
       setUploadProgress(100);

@@ -1,64 +1,36 @@
 import axios from "axios";
+import Cookies from "js-cookie";
+const API_BASE_URL = "http://localhost:5000/api";
 
-const API_BASE_URL = "http://localhost:5000/api"; // Replace with your Flask server URL
-
-// export const uploadVideo = async (file) => {
-//   const formData = new FormData();
-//   formData.append("file", file);
-
-//   try {
-//     const response = await axios.post(`${API_BASE_URL}/upload`, formData, {
-//       headers: {
-//         "Content-Type": "multipart/form-data",
-//       },
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error uploading video:", error);
-//     throw error;
-//   }
-// };
-
-// export const storeTranscript = async (transcript, videoName) => {
-//   try {
-//     const response = await axios.post(`${API_BASE_URL}/store`, {
-//       transcript,
-//       video_name: videoName,
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error storing transcript:", error);
-//     throw error;
-//   }
-// };
-
-// export const queryVideo = async (query) => {
-//   try {
-//     const response = await axios.post(`${API_BASE_URL}/query`, {
-//       query,
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error querying video:", error);
-//     throw error;
-//   }
-// };
+const tokenManager = {
+  setToken: (token) => {
+    Cookies.set("authToken", token, {
+      expires: 1,
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+    });
+  },
+  getToken: () => {
+    return Cookies.get("authToken");
+  },
+  removeToken: () => {
+    Cookies.remove("authToken");
+  },
+  getAuthHeader: () => {
+    const token = Cookies.get("authToken");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  },
+};
 
 export const signUp = async (userName, email, password) => {
   if (userName && email && password) {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/signup`,
-        {
-          username: userName,
-          email,
-          password,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-      console.log(response.data);
+      const response = await axios.post(`${API_BASE_URL}/signup`, {
+        username: userName,
+        email,
+        password,
+      });
       return response.data;
     } catch (error) {
       console.error("Error in sign up");
@@ -76,16 +48,26 @@ export const signIn = async (user, password) => {
         ? { email: user, password }
         : { username: user, password };
 
-      const response = await axios.post(`${API_BASE_URL}/login`, loginData, {
-        withCredentials: true,
-      });
+      const response = await axios.post(`${API_BASE_URL}/login`, loginData);
 
-      console.log(response.data);
+      //^ Store the token after successful login
+      if (response.data.token) {
+        tokenManager.setToken(response.data.token);
+      }
+
       return response.data;
     } catch (error) {
       console.log(error);
+      throw error;
     }
   } else {
     console.log("All fields are required");
   }
 };
+
+export const signOut = () => {
+  tokenManager.removeToken();
+  return true;
+};
+
+export { tokenManager };
