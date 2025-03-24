@@ -6,9 +6,9 @@ const tokenManager = {
   setToken: (token) => {
     Cookies.set("authToken", token, {
       expires: 1,
-      httpOnly: true,
-      secure: false,
-      sameSite: "Lax",
+      // httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
     });
   },
   getToken: () => {

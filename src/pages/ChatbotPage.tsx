@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, Play, Film } from "lucide-react";
+import { Send, Play, Film, Trash2 } from "lucide-react"; // Import Trash2 icon
 import { fetchVideos, queryVideo } from "@/api/chatbotApi"; // Import API functions
 
 // Define the message type
@@ -216,6 +216,23 @@ const ChatbotPage = () => {
     setSelectedVideo(e.target.value);
   };
 
+  //^ Delete Chat Messages
+  const handleDeleteChat = () => {
+    setMessages([
+      {
+        type: "bot",
+        content:
+          selectedVideo === "all"
+            ? "I'm ready to answer questions about all your videos. What would you like to know?"
+            : selectedVideo
+            ? `I'm ready to answer questions about "${selectedVideo}". What would you like to know?`
+            : "Hello! I'm ready to help you analyze your videos. What would you like to know?",
+      },
+    ]);
+
+    setInput("");
+  };
+
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-2rem)] flex flex-col">
@@ -295,6 +312,17 @@ const ChatbotPage = () => {
               {/* Input */}
               <form onSubmit={handleSubmit} className="p-4 border-t bg-white">
                 <div className="flex items-center gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleDeleteChat}
+                    title="Clear chat history"
+                    className="bg-white hover:bg-red-600 text-red-600 hover:text-white"
+                    disabled={!selectedVideo || loading}
+                  >
+                    <Trash2 className="h-4 w-4 hover:text-red-600" />
+                  </Button>
                   <input
                     type="text"
                     value={input}
