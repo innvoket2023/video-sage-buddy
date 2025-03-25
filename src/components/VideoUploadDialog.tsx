@@ -152,8 +152,8 @@ const VideoUploadDialog = ({ open, setOpen }) => {
               />
             </div>
           ) : (
-            <div className="space-y-4 overflow-hidden">
-              <div className="flex max-w-[460px] items-center p-4 bg-gray-50 rounded-lg overflow-hidden">
+            <div className="space-y-4">
+              <div className="flex max-w-[460px] items-center p-4 bg-gray-50 rounded-lg">
                 <FileVideo className="h-8 w-8 text-blue-500 mr-3" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate overflow-hidden">
@@ -184,7 +184,7 @@ const VideoUploadDialog = ({ open, setOpen }) => {
                     onChange={(e) => setTitle(e.target.value)}
                     disabled={uploading}
                   />
-                  <p className="text-xs text-gray-500 mt-1 max-w-[460px]">
+                  <p className="text-xs text-gray-500 mt-1 max-w-[460px] truncate">
                     {title.trim()
                       ? `Using custom title: "${title}"`
                       : `Using filename: "${selectedFile.name}"`}

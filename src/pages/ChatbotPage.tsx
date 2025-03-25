@@ -235,7 +235,7 @@ const ChatbotPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="h-[calc(100vh-2rem)] flex flex-col">
+      <div className="h-[calc(100vh-4rem)] flex flex-col">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">Video Chat</h1>
@@ -258,10 +258,10 @@ const ChatbotPage = () => {
           </div>
         </div>
 
-        <div className="flex gap-6 flex-1">
+        <div className="flex gap-6 flex-1 overflow-hidden">
           {/* Chat Section */}
-          <div className="flex-1 flex flex-col">
-            <Card className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Card className="flex-1 overflow-y-auto flex flex-col">
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map((message, index) => (
@@ -349,63 +349,65 @@ const ChatbotPage = () => {
           </div>
 
           {/* Video Preview */}
-          <Card className="w-96">
-            <div className="aspect-video bg-gray-100 relative">
-              {currentVideo?.video_url ? (
-                <video
-                  ref={videoRef}
-                  id="video-preview"
-                  key={currentVideo.publicID}
-                  controls
-                  className="w-full h-full"
-                >
-                  <source src={currentVideo.video_url} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  {selectedVideo ? (
-                    <>
-                      <Film className="h-16 w-16 text-gray-400 mb-2" />
-                      <p className="text-gray-500 font-medium">
-                        Video loading or unavailable
+          <div className="w-96 flex-shrink-0 sticky top-4 h-[calc(100vh-3rem)]">
+            <Card className="h-full">
+              <div className="aspect-video bg-gray-100 sticky">
+                {currentVideo?.video_url ? (
+                  <video
+                    ref={videoRef}
+                    id="video-preview"
+                    key={currentVideo.publicID}
+                    controls
+                    className="w-full h-full"
+                  >
+                    <source src={currentVideo.video_url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    {selectedVideo ? (
+                      <>
+                        <Film className="h-16 w-16 text-gray-400 mb-2" />
+                        <p className="text-gray-500 font-medium">
+                          Video loading or unavailable
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {selectedVideo === "all"
+                            ? "Ask a question to see a relevant video"
+                            : `Selected: ${selectedVideo}`}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-gray-400">No video selected</p>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="p-4">
+                {currentVideo ? (
+                  <>
+                    <h3 className="font-medium">{currentVideo.publicID}</h3>
+                    {currentVideo.description && (
+                      <p className="text-sm text-gray-600 mt-1">
+                        {currentVideo.description}
                       </p>
-                      <p className="text-sm text-gray-400">
-                        {selectedVideo === "all"
-                          ? "Ask a question to see a relevant video"
-                          : `Selected: ${selectedVideo}`}
+                    )}
+                    {selectedVideo === "all" && previewVideoId && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Showing video relevant to your query
                       </p>
-                    </>
-                  ) : (
-                    <p className="text-gray-400">No video selected</p>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="p-4">
-              {currentVideo ? (
-                <>
-                  <h3 className="font-medium">{currentVideo.publicID}</h3>
-                  {currentVideo.description && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {currentVideo.description}
-                    </p>
-                  )}
-                  {selectedVideo === "all" && previewVideoId && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Showing video relevant to your query
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="text-gray-500">
-                  {selectedVideo === "all"
-                    ? "Ask a question to see a relevant video"
-                    : "Please select a video from the dropdown"}
-                </p>
-              )}
-            </div>
-          </Card>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-gray-500">
+                    {selectedVideo === "all"
+                      ? "Ask a question to see a relevant video"
+                      : "Please select a video from the dropdown"}
+                  </p>
+                )}
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     </DashboardLayout>
