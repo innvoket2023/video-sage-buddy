@@ -17,7 +17,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const navigate = useNavigate();
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    // { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Videos", href: "/videos", icon: Film },
     { name: "Chat", href: "/chat", icon: MessageSquare },
     { name: "Settings", href: "/settings", icon: Settings },
