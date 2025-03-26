@@ -1,4 +1,3 @@
-
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Film, Users, Clock, ArrowUpRight } from "lucide-react";
@@ -36,7 +35,9 @@ const Dashboard = () => {
       <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-bold">Welcome back, User!</h1>
-          <p className="text-gray-600">Here's what's happening with your videos</p>
+          <p className="text-gray-600">
+            Here's what's happening with your videos
+          </p>
         </div>
 
         {/* Stats Grid */}
@@ -46,7 +47,9 @@ const Dashboard = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      {stat.title}
+                    </p>
                     <p className="text-2xl font-bold mt-1">{stat.value}</p>
                   </div>
                   <stat.icon className="h-8 w-8 text-gray-400" />
@@ -75,7 +78,9 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <p className="font-medium">{video.title}</p>
-                      <p className="text-sm text-gray-600">Duration: {video.duration}</p>
+                      <p className="text-sm text-gray-600">
+                        Duration: {video.duration}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">

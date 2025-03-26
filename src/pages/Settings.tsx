@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ const Settings = () => {
   const [personalInfo, setPersonalInfo] = useState({
     name: "John Doe",
     email: "john@example.com",
-    avatar: "/placeholder.svg"
+    avatar: "/placeholder.svg",
   });
 
   const handleUpdateProfile = (e: React.FormEvent) => {
@@ -35,7 +34,9 @@ const Settings = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Settings</h1>
-          <p className="text-gray-600">Manage your account settings and preferences</p>
+          <p className="text-gray-600">
+            Manage your account settings and preferences
+          </p>
         </div>
 
         {/* Profile Section */}
@@ -72,7 +73,10 @@ const Settings = () => {
               {/* Profile Form */}
               <form onSubmit={handleUpdateProfile} className="flex-1 space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Full Name
                   </label>
                   <div className="relative">
@@ -81,14 +85,22 @@ const Settings = () => {
                       id="name"
                       type="text"
                       value={personalInfo.name}
-                      onChange={(e) => setPersonalInfo({ ...personalInfo, name: e.target.value })}
+                      onChange={(e) =>
+                        setPersonalInfo({
+                          ...personalInfo,
+                          name: e.target.value,
+                        })
+                      }
                       className="pl-10 w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Email Address
                   </label>
                   <div className="relative">
@@ -97,15 +109,18 @@ const Settings = () => {
                       id="email"
                       type="email"
                       value={personalInfo.email}
-                      onChange={(e) => setPersonalInfo({ ...personalInfo, email: e.target.value })}
+                      onChange={(e) =>
+                        setPersonalInfo({
+                          ...personalInfo,
+                          email: e.target.value,
+                        })
+                      }
                       className="pl-10 w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                   </div>
                 </div>
 
-                <Button type="submit">
-                  Save Changes
-                </Button>
+                <Button type="submit">Save Changes</Button>
               </form>
             </div>
           </CardContent>
@@ -120,9 +135,15 @@ const Settings = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-md">
+            <form
+              onSubmit={handleUpdatePassword}
+              className="space-y-4 max-w-md"
+            >
               <div>
-                <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="currentPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Current Password
                 </label>
                 <div className="relative">
@@ -137,7 +158,10 @@ const Settings = () => {
               </div>
 
               <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="newPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   New Password
                 </label>
                 <div className="relative">
@@ -152,7 +176,10 @@ const Settings = () => {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Confirm New Password
                 </label>
                 <div className="relative">
@@ -166,9 +193,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <Button type="submit">
-                Update Password
-              </Button>
+              <Button type="submit">Update Password</Button>
             </form>
           </CardContent>
         </Card>
@@ -186,21 +211,21 @@ const Settings = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Email Notifications</h4>
-                  <p className="text-sm text-gray-600">Receive email updates about your videos</p>
+                  <p className="text-sm text-gray-600">
+                    Receive email updates about your videos
+                  </p>
                 </div>
-                <Button variant="outline">
-                  Configure
-                </Button>
+                <Button variant="outline">Configure</Button>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Browser Notifications</h4>
-                  <p className="text-sm text-gray-600">Get notified when video processing is complete</p>
+                  <p className="text-sm text-gray-600">
+                    Get notified when video processing is complete
+                  </p>
                 </div>
-                <Button variant="outline">
-                  Configure
-                </Button>
+                <Button variant="outline">Configure</Button>
               </div>
             </div>
           </CardContent>

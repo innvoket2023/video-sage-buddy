@@ -37,7 +37,7 @@ export const uploadToCloudinary = async (
     },
     onUploadProgress,
   });
-  console.log(response.data)
+  console.log(response.data);
   return response.data;
 };
 

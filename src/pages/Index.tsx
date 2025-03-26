@@ -1,4 +1,13 @@
-import { ArrowRight, Play, Shield, Zap, MessageSquare, CloudLightning, Globe, Check } from "lucide-react";
+import {
+  ArrowRight,
+  Play,
+  Shield,
+  Zap,
+  MessageSquare,
+  CloudLightning,
+  Globe,
+  Check,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -14,13 +23,36 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="text-2xl font-bold">VideoSage</div>
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm text-gray-600 hover:text-gray-900">Features</a>
-              <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900">Pricing</a>
-              <a href="#testimonials" className="text-sm text-gray-600 hover:text-gray-900">Testimonials</a>
+              <a
+                href="#features"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Features
+              </a>
+              <a
+                href="#pricing"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Pricing
+              </a>
+              <a
+                href="#testimonials"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Testimonials
+              </a>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" className="text-sm" onClick={() => navigate("/signin")}>Sign In</Button>
-              <Button className="text-sm" onClick={() => navigate("/signup")}>Get Started</Button>
+              <Button
+                variant="ghost"
+                className="text-sm"
+                onClick={() => navigate("/signin")}
+              >
+                Sign In
+              </Button>
+              <Button className="text-sm" onClick={() => navigate("/signup")}>
+                Get Started
+              </Button>
             </div>
           </div>
         </div>
@@ -35,13 +67,18 @@ const Index = () => {
               Transform Your Videos with AI-Powered Analysis
             </h1>
             <p className="text-lg text-gray-600 md:text-xl">
-              Upload your videos and get instant, accurate answers to any question about their content. Powered by advanced AI technology.
+              Upload your videos and get instant, accurate answers to any
+              question about their content. Powered by advanced AI technology.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" className="text-base w-full sm:w-auto">
                 Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="text-base w-full sm:w-auto">
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-base w-full sm:w-auto"
+              >
                 Watch Demo <Play className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -67,13 +104,17 @@ const Index = () => {
               Powerful Features for Video Analysis
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Everything you need to understand and interact with your video content, powered by state-of-the-art AI technology
+              Everything you need to understand and interact with your video
+              content, powered by state-of-the-art AI technology
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="p-6 slide-in hover:shadow-lg transition-shadow">
+              <Card
+                key={index}
+                className="p-6 slide-in hover:shadow-lg transition-shadow"
+              >
                 <feature.icon className="h-12 w-12 text-primary mb-4" />
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
@@ -97,7 +138,10 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="p-8 hover:shadow-lg transition-shadow">
+              <Card
+                key={index}
+                className="p-8 hover:shadow-lg transition-shadow"
+              >
                 <p className="text-gray-600 mb-6">{testimonial.content}</p>
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-gray-200" />
@@ -126,7 +170,10 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {pricingPlans.map((plan, index) => (
-              <Card key={index} className="p-8 hover:shadow-lg transition-shadow">
+              <Card
+                key={index}
+                className="p-8 hover:shadow-lg transition-shadow"
+              >
                 <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
                 <div className="mb-6">
                   <span className="text-4xl font-bold">${plan.price}</span>
@@ -140,7 +187,10 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="w-full" variant={index === 1 ? "default" : "outline"}>
+                <Button
+                  className="w-full"
+                  variant={index === 1 ? "default" : "outline"}
+                >
                   Get Started
                 </Button>
               </Card>
@@ -171,33 +221,81 @@ const Index = () => {
             <div>
               <h4 className="text-white font-semibold mb-4">Product</h4>
               <ul className="space-y-2">
-                <li><a href="#features" className="hover:text-white">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
-                <li><a href="#testimonials" className="hover:text-white">Testimonials</a></li>
+                <li>
+                  <a href="#features" className="hover:text-white">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#pricing" className="hover:text-white">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="#testimonials" className="hover:text-white">
+                    Testimonials
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">About</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Careers</a></li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Careers
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Resources</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">Documentation</a></li>
-                <li><a href="#" className="hover:text-white">Support</a></li>
-                <li><a href="#" className="hover:text-white">API</a></li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Support
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    API
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">Privacy</a></li>
-                <li><a href="#" className="hover:text-white">Terms</a></li>
-                <li><a href="#" className="hover:text-white">Security</a></li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Privacy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Terms
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white">
+                    Security
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
@@ -214,51 +312,58 @@ const features = [
   {
     icon: Zap,
     title: "Instant Analysis",
-    description: "Get immediate insights from your videos with our advanced AI technology."
+    description:
+      "Get immediate insights from your videos with our advanced AI technology.",
   },
   {
     icon: Shield,
     title: "Secure Storage",
-    description: "Your videos are encrypted and stored securely in the cloud."
+    description: "Your videos are encrypted and stored securely in the cloud.",
   },
   {
     icon: MessageSquare,
     title: "AI Chat Interface",
-    description: "Ask questions about your videos and get accurate, contextual answers."
+    description:
+      "Ask questions about your videos and get accurate, contextual answers.",
   },
   {
     icon: Play,
     title: "Interactive Playback",
-    description: "Jump to specific moments mentioned in the analysis with precise timestamps."
+    description:
+      "Jump to specific moments mentioned in the analysis with precise timestamps.",
   },
   {
     icon: CloudLightning,
     title: "Fast Processing",
-    description: "Upload and process videos quickly with our optimized infrastructure."
+    description:
+      "Upload and process videos quickly with our optimized infrastructure.",
   },
   {
     icon: Globe,
     title: "Global Access",
-    description: "Access your videos and insights from anywhere in the world."
-  }
+    description: "Access your videos and insights from anywhere in the world.",
+  },
 ];
 
 const testimonials = [
   {
-    content: "VideoSage has revolutionized how we analyze our educational content. The AI-powered insights are incredibly accurate and save us hours of manual work.",
+    content:
+      "VideoSage has revolutionized how we analyze our educational content. The AI-powered insights are incredibly accurate and save us hours of manual work.",
     name: "Sarah Johnson",
-    role: "Educational Content Creator"
+    role: "Educational Content Creator",
   },
   {
-    content: "The ability to instantly search through video content and get precise answers has transformed our training process. It's like having a video expert on demand.",
+    content:
+      "The ability to instantly search through video content and get precise answers has transformed our training process. It's like having a video expert on demand.",
     name: "Michael Chen",
-    role: "Corporate Training Manager"
+    role: "Corporate Training Manager",
   },
   {
-    content: "As a YouTuber, VideoSage helps me understand my content better and make data-driven decisions about future videos. It's an invaluable tool.",
+    content:
+      "As a YouTuber, VideoSage helps me understand my content better and make data-driven decisions about future videos. It's an invaluable tool.",
     name: "Alex Rodriguez",
-    role: "Content Creator"
-  }
+    role: "Content Creator",
+  },
 ];
 
 const pricingPlans = [
@@ -269,8 +374,8 @@ const pricingPlans = [
       "5 hours of video processing",
       "Basic AI analysis",
       "Email support",
-      "1 user account"
-    ]
+      "1 user account",
+    ],
   },
   {
     name: "Professional",
@@ -280,8 +385,8 @@ const pricingPlans = [
       "Advanced AI analysis",
       "Priority support",
       "5 user accounts",
-      "Custom integrations"
-    ]
+      "Custom integrations",
+    ],
   },
   {
     name: "Enterprise",
@@ -291,9 +396,9 @@ const pricingPlans = [
       "Custom AI models",
       "24/7 premium support",
       "Unlimited users",
-      "API access"
-    ]
-  }
+      "API access",
+    ],
+  },
 ];
 
 export default Index;
