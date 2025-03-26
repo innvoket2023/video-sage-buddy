@@ -36,7 +36,7 @@ const SignIn = () => {
           title: "Success",
           description: "Welcome back!",
         });
-        navigate("/dashboard");
+        navigate("/videos");
       }
     } catch (error) {
       toast({
