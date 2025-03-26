@@ -50,7 +50,7 @@ const Settings = () => {
           <CardContent>
             <div className="flex items-start gap-8">
               {/* Avatar */}
-              <div className="flex flex-col items-center gap-4">
+              {/* <div className="flex flex-col items-center gap-4">
                 <div className="relative">
                   <img
                     src={personalInfo.avatar}
@@ -68,7 +68,7 @@ const Settings = () => {
                 <p className="text-sm text-gray-600">
                   Click to upload new avatar
                 </p>
-              </div>
+              </div> */}
 
               {/* Profile Form */}
               <form onSubmit={handleUpdateProfile} className="flex-1 space-y-4">
@@ -199,7 +199,7 @@ const Settings = () => {
         </Card>
 
         {/* Notifications Section */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
@@ -229,7 +229,7 @@ const Settings = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </DashboardLayout>
   );
