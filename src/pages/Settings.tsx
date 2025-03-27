@@ -1,26 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Mail, Lock, Bell, Shield, Camera } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-
+import { changeCredentials, fetchCredentials } from "@/api/settingApi";
 const Settings = () => {
   const { toast } = useToast();
   const [personalInfo, setPersonalInfo] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-    avatar: "/placeholder.svg",
+    name: "",
+    email: "",
   });
-
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const data = await fetchCredentials();
+      const cred = {
+        name: data.username,
+        email: data.email,
+      };
+      setPersonalInfo(cred);
+    };
+    fetchUserDetails();
+  }, []);
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Success",
-      description: "Profile updated successfully",
-    });
+    try {
+      const res = await changeCredentials(
+        personalInfo.name,
+        personalInfo.email
+      );
+      if (res) {
+        toast({
+          title: "Success",
+          description: "Profile updated successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || "Failed to update profile",
+        variant: "destructive",
+      });
+    }
   };
-
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
@@ -77,7 +99,7 @@ const Settings = () => {
                     htmlFor="name"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    Full Name
+                    Username
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
