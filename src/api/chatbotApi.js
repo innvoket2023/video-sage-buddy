@@ -60,18 +60,31 @@ export const sendVideoURL = async (videoUrl) => {
     console.log(response);
     return response;
   } catch (error) {
-    console.error("Error Sending video url:", error);
-    throw error;
+    if (error.response.status == 409) {
+      console.log("voice clone already exists");
+    } else {
+      console.error("Error Sending video url:", error);
+      throw error;
+    }
   }
 };
 
 export const readMessage = async (videoUrl, message) => {
   try {
-    const response = await apiInstance.post("/speak_message", {
-      video_url: videoUrl,
-      message: message,
-    });
-    return response;
+    const response = await apiInstance.post(
+      "/speak_message",
+      {
+        cloudinary_url: videoUrl,
+        message: message,
+      },
+      {
+        responseType: "blob",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response.data;
   } catch (error) {
     console.error("Error reading the message:", error);
     throw error;

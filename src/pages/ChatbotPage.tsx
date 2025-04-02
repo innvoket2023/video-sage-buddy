@@ -50,8 +50,13 @@ const ChatbotPage = () => {
   const [previewVideoId, setPreviewVideoId] = useState<string>("");
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
+  const [readingMessage, setReadingMessage] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(false);
+  const [voiceAvailable, setVoiceAvailable] = useState<boolean>(false);
+  const [voiceLoading, setVoiceLoading] = useState<boolean>(false);
+  const [voiceError, setVoiceError] = useState<boolean>(false);
 
   // Fetch videos when the component mounts
   useEffect(() => {
@@ -88,6 +93,11 @@ const ChatbotPage = () => {
     } else {
       setPreviewVideoId("");
     }
+
+    // Reset voice states when changing videos
+    setVoiceAvailable(false);
+    setVoiceLoading(false);
+    setVoiceError(false);
   }, [selectedVideo]);
 
   // Update current video details when previewVideoId changes
@@ -96,16 +106,69 @@ const ChatbotPage = () => {
       const videoDetails = videos.find(
         (video) => video.publicID === previewVideoId
       );
-      setCurrentVideo(videoDetails || null);
-      sendVideoURL(videoDetails.video_url);
+      if (videoDetails) {
+        setCurrentVideo(videoDetails);
+        if (voiceEnabled) {
+          // Initialize voice processing when video changes
+          initializeVoiceForVideo(videoDetails.video_url);
+        }
+      } else {
+        setCurrentVideo(null);
+      }
     } else {
       setCurrentVideo(null);
     }
-  }, [previewVideoId, videos]);
+  }, [previewVideoId, videos, voiceEnabled]);
+
+  // Stop audio playback when changing videos
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setReadingMessage(null);
+    }
+  }, [selectedVideo]);
+
+  // Initialize voice for a video
+  const initializeVoiceForVideo = async (videoUrl) => {
+    if (!videoUrl) return;
+
+    setVoiceLoading(true);
+    setVoiceAvailable(false);
+    setVoiceError(false);
+
+    try {
+      const response = await sendVideoURL(videoUrl);
+      setVoiceAvailable(true);
+      setVoiceLoading(false);
+    } catch (error) {
+      // Check if it's a 409 error (conflict - voice clone already exists)
+      if (error.response && error.response.status === 409) {
+        setVoiceAvailable(true);
+        setVoiceLoading(false);
+      } else {
+        // Handle other errors
+        setVoiceError(true);
+        setVoiceLoading(false);
+        console.error("Error initializing voice:", error);
+      }
+    }
+  };
 
   //^ Voice Toggle
   const toggleVoice = () => {
-    setVoiceEnabled((prev) => !prev);
+    const newVoiceEnabled = !voiceEnabled;
+    setVoiceEnabled(newVoiceEnabled);
+
+    if (newVoiceEnabled && currentVideo) {
+      // Initialize voice when enabling
+      initializeVoiceForVideo(currentVideo.video_url);
+    }
+
+    //^ Stop any playing audio when turning voice off
+    if (voiceEnabled && audioRef.current) {
+      audioRef.current.pause();
+      setReadingMessage(null);
+    }
   };
 
   // Parse message content for timestamps
@@ -141,6 +204,12 @@ const ChatbotPage = () => {
         )}
       </>
     );
+  };
+
+  //^ function to remove timestamps from message
+  const removeTimeStampsFromMessage = (content: string) => {
+    const timestampRegex = /\[(\d{2}:\d{2}:\d{2})\]/g;
+    return content.replace(timestampRegex, "").trim();
   };
 
   // Handle form submission
@@ -231,6 +300,51 @@ const ChatbotPage = () => {
     }
   };
 
+  // Handle reading a message using TTS
+  const handleReadMessage = async (messageContent: string, index: number) => {
+    if (!voiceEnabled || !currentVideo || !voiceAvailable) return;
+
+    try {
+      setReadingMessage(index);
+
+      // Stop any currently playing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        URL.revokeObjectURL(audioRef.current.src);
+      }
+
+      // Remove timestamps from message before sending to TTS
+      const cleanMessage = removeTimeStampsFromMessage(messageContent);
+
+      // Call readMessage API with responseType blob
+      const response = await readMessage(currentVideo.video_url, cleanMessage);
+
+      // Create audio element and play
+      const audio = new Audio();
+      audioRef.current = audio;
+
+      // Set up event handlers
+      audio.onended = () => {
+        setReadingMessage(null);
+      };
+
+      audio.onerror = (e) => {
+        console.error("Error playing audio:", e);
+        setReadingMessage(null);
+      };
+
+      // Set the source and play
+      audio.src = URL.createObjectURL(response);
+      audio.play().catch((err) => {
+        console.error("Error playing audio:", err);
+        setReadingMessage(null);
+      });
+    } catch (error) {
+      console.error("Error reading message:", error);
+      setReadingMessage(null);
+    }
+  };
+
   // Handle video selection changes
   const handleVideoSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedVideo(e.target.value);
@@ -253,6 +367,13 @@ const ChatbotPage = () => {
     setInput("");
   };
 
+  // Get button text based on voice status
+  const getVoiceButtonText = () => {
+    if (voiceLoading) return "Loading Voice...";
+    if (voiceError) return "Voice Error";
+    return voiceEnabled ? "Voice On" : "Voice Off";
+  };
+
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-4rem)] flex flex-col">
@@ -262,6 +383,32 @@ const ChatbotPage = () => {
             <p className="text-gray-600">Ask questions about your videos</p>
           </div>
           <div className="flex items-center gap-4">
+            {/* Voice toggle button */}
+            <Button
+              variant={voiceEnabled ? "default" : "outline"}
+              size="sm"
+              className="flex items-center gap-1"
+              onClick={toggleVoice}
+              title={voiceEnabled ? "Mute Voice" : "Enable Voice"}
+              disabled={voiceLoading}
+            >
+              {voiceLoading ? (
+                <>
+                  <AudioLines className="h-4 w-4 animate-pulse" />
+                  <span className="text-xs">Loading Voice...</span>
+                </>
+              ) : voiceEnabled ? (
+                <>
+                  <AudioLines className="h-4 w-4" />
+                  <span className="text-xs">Voice On</span>
+                </>
+              ) : (
+                <>
+                  <AudioLines className="h-4 w-4" />
+                  <span className="text-xs">Voice Off</span>
+                </>
+              )}
+            </Button>
             <select
               className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               value={selectedVideo}
@@ -304,18 +451,64 @@ const ChatbotPage = () => {
                         <p>{message.content}</p>
                       )}
 
-                      {message.timestamp && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="mt-2"
-                          onClick={() =>
-                            handlePlayAtTimestamp(message.timestamp || "")
-                          }
-                        >
-                          <Play className="h-4 w-4 mr-2" />
-                          Play at {message.timestamp}
-                        </Button>
+                      {message.type === "bot" && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {message.timestamp && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() =>
+                                handlePlayAtTimestamp(message.timestamp || "")
+                              }
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              Play at {message.timestamp}
+                            </Button>
+                          )}
+
+                          {/* Read Message Button */}
+                          {voiceEnabled && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              disabled={
+                                !voiceEnabled ||
+                                !currentVideo ||
+                                readingMessage === index ||
+                                voiceLoading ||
+                                !voiceAvailable ||
+                                voiceError
+                              }
+                              onClick={() =>
+                                handleReadMessage(message.content, index)
+                              }
+                              className={
+                                readingMessage === index ? "bg-blue-100" : ""
+                              }
+                              title={
+                                voiceLoading
+                                  ? "Voice is loading..."
+                                  : voiceError
+                                  ? "Voice error occurred"
+                                  : !voiceAvailable
+                                  ? "Voice not available yet"
+                                  : "Read message aloud"
+                              }
+                            >
+                              {readingMessage === index ? (
+                                <>
+                                  <Volume2 className="h-4 w-4 mr-2 animate-pulse" />
+                                  Reading...
+                                </>
+                              ) : (
+                                <>
+                                  <Volume2 className="h-4 w-4 mr-2" />
+                                  Read Message
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -408,26 +601,6 @@ const ChatbotPage = () => {
                   <>
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-medium">{currentVideo.publicID}</h3>
-                      {/* Voice toggle button */}
-                      <Button
-                        variant={voiceEnabled ? "default" : "outline"}
-                        size="sm"
-                        className="flex items-center gap-1"
-                        onClick={toggleVoice}
-                        title={voiceEnabled ? "Mute Voice" : "Enable Voice"}
-                      >
-                        {voiceEnabled ? (
-                          <>
-                            <AudioLines className="h-4 w-4" />
-                            <span className="text-xs">Voice On</span>
-                          </>
-                        ) : (
-                          <>
-                            <AudioLines className="h-4 w-4" />
-                            <span className="text-xs">Voice Off</span>
-                          </>
-                        )}
-                      </Button>
                     </div>
                     {currentVideo.description && (
                       <p className="text-sm text-gray-600 mt-1">
