@@ -51,3 +51,29 @@ export const queryVideo = async (query, videoName) => {
     throw error;
   }
 };
+
+export const sendVideoURL = async (videoUrl) => {
+  try {
+    const response = await apiInstance.post("/create_clone", {
+      cloudinary_url: videoUrl,
+    });
+    console.log(response);
+    return response;
+  } catch (error) {
+    console.error("Error Sending video url:", error);
+    throw error;
+  }
+};
+
+export const readMessage = async (videoUrl, message) => {
+  try {
+    const response = await apiInstance.post("/speak_message", {
+      video_url: videoUrl,
+      message: message,
+    });
+    return response;
+  } catch (error) {
+    console.error("Error reading the message:", error);
+    throw error;
+  }
+};

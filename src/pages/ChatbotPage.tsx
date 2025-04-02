@@ -2,8 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Send, Play, Film, Trash2 } from "lucide-react"; // Import Trash2 icon
-import { fetchVideos, queryVideo } from "@/api/chatbotApi"; // Import API functions
+import {
+  Send,
+  Play,
+  Film,
+  Trash2,
+  Volume2,
+  VolumeX,
+  AudioLines,
+} from "lucide-react";
+import {
+  fetchVideos,
+  queryVideo,
+  sendVideoURL,
+  readMessage,
+} from "@/api/chatbotApi";
 
 // Define the message type
 type Message = {
@@ -38,6 +51,7 @@ const ChatbotPage = () => {
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null); // Video details to display
   const [loading, setLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(true);
 
   // Fetch videos when the component mounts
   useEffect(() => {
@@ -83,10 +97,16 @@ const ChatbotPage = () => {
         (video) => video.publicID === previewVideoId
       );
       setCurrentVideo(videoDetails || null);
+      sendVideoURL(videoDetails.video_url);
     } else {
       setCurrentVideo(null);
     }
   }, [previewVideoId, videos]);
+
+  //^ Voice Toggle
+  const toggleVoice = () => {
+    setVoiceEnabled((prev) => !prev);
+  };
 
   // Parse message content for timestamps
   const parseMessageWithTimestamps = (content: string) => {
@@ -386,7 +406,29 @@ const ChatbotPage = () => {
               <div className="p-4">
                 {currentVideo ? (
                   <>
-                    <h3 className="font-medium">{currentVideo.publicID}</h3>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-medium">{currentVideo.publicID}</h3>
+                      {/* Voice toggle button */}
+                      <Button
+                        variant={voiceEnabled ? "default" : "outline"}
+                        size="sm"
+                        className="flex items-center gap-1"
+                        onClick={toggleVoice}
+                        title={voiceEnabled ? "Mute Voice" : "Enable Voice"}
+                      >
+                        {voiceEnabled ? (
+                          <>
+                            <AudioLines className="h-4 w-4" />
+                            <span className="text-xs">Voice On</span>
+                          </>
+                        ) : (
+                          <>
+                            <AudioLines className="h-4 w-4" />
+                            <span className="text-xs">Voice Off</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
                     {currentVideo.description && (
                       <p className="text-sm text-gray-600 mt-1">
                         {currentVideo.description}
