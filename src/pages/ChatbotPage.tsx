@@ -14,7 +14,7 @@ import {
 import {
   fetchVideos,
   queryVideo,
-  sendVideoURL,
+  createVoiceClone,
   readMessage,
 } from "@/api/chatbotApi";
 
@@ -137,7 +137,7 @@ const ChatbotPage = () => {
     setVoiceError(false);
 
     try {
-      const response = await sendVideoURL(videoUrl);
+      const response = await createVoiceClone(videoUrl);
       setVoiceAvailable(true);
       setVoiceLoading(false);
     } catch (error) {

@@ -52,7 +52,7 @@ export const queryVideo = async (query, videoName) => {
   }
 };
 
-export const sendVideoURL = async (videoUrl) => {
+export const createVoiceClone = async (videoUrl) => {
   try {
     const response = await apiInstance.post("/create_clone", {
       cloudinary_url: videoUrl,
