@@ -63,7 +63,7 @@ export const createVoiceClone = async (videoUrl) => {
     if (error.response.status == 409) {
       console.log("voice clone already exists");
     } else {
-      console.error("Error Sending video url:", error);
+      console.error("Error creating voice clone:", error);
       throw error;
     }
   }
