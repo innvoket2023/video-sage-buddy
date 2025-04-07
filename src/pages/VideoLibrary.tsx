@@ -67,8 +67,8 @@ const VideoLibrary = () => {
   const [searching, setSearching] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [activeVideoForDelete, setActiveVideoForDelete] = useState(null);
-  const dropdownRef = useRef(null);
-  const buttonRefs = useRef({});
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const filterRef = useRef(null);
 
   // Fetch videos on component mount
@@ -142,8 +142,6 @@ const VideoLibrary = () => {
       await deleteVideo(activeVideoForDelete.url);
       setShowDropdown(null);
       setActiveVideoForDelete(null);
-
-      // Refresh the video list
       const fetchedVideos = await fetchVideos();
       setVideos(fetchedVideos);
     } catch (error) {

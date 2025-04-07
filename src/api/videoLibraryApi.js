@@ -41,8 +41,6 @@ export const deleteVideo = async (videoId) => {
   try {
     // Get authorization header from token manager
     const authHeader = tokenManager.getAuthHeader();
-    console.log("delete called");
-    console.log(videoId);
     await axios.delete(`${API_URL}/delete/video`, {
       data: { video_url: videoId },
       headers: {
