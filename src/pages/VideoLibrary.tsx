@@ -25,7 +25,13 @@ import VideoUploadDialog from "@/components/VideoUploadDialog";
 import VideoPlayerDialog from "@/components/VideoPlayerDialog";
 import { fetchVideos, deleteVideo } from "@/api/videoLibraryApi";
 
+// Separate component for the dropdown menu
 const DropdownMenu = ({ top, left, onDelete, dropdownRef }) => {
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    onDelete();
+  };
+
   return createPortal(
     <div
       ref={dropdownRef}
@@ -36,7 +42,7 @@ const DropdownMenu = ({ top, left, onDelete, dropdownRef }) => {
         className="py-2 px-4 flex items-center gap-2 cursor-pointer"
         role="menu"
         aria-orientation="vertical"
-        onClick={onDelete}
+        onClick={handleDeleteClick}
       >
         <Trash2 className="h-4 w-4 text-red-500" />
         <span className="text-sm">Delete</span>
@@ -60,7 +66,7 @@ const VideoLibrary = () => {
   const [videoNotFound, setVideoNotFound] = useState("");
   const [searching, setSearching] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(null);
-
+  const [activeVideoForDelete, setActiveVideoForDelete] = useState(null);
   const dropdownRef = useRef(null);
   const buttonRefs = useRef({});
   const filterRef = useRef(null);
@@ -102,11 +108,12 @@ const VideoLibrary = () => {
     }
   };
 
-  const handleMoreClick = (videoId, event) => {
+  const handleMoreClick = (videoId, event, videoUrl) => {
     event.stopPropagation();
 
     if (showDropdown === videoId) {
       setShowDropdown(null);
+      setActiveVideoForDelete(null);
       return;
     }
 
@@ -118,13 +125,25 @@ const VideoLibrary = () => {
         left: rect.right - 140,
       });
       setShowDropdown(videoId);
+      setActiveVideoForDelete({
+        id: videoId,
+        url: videoUrl,
+      });
     }
   };
 
-  const handleDeleteVideo = async () => {
+  const handleDeleteClick = async () => {
+    if (!activeVideoForDelete || !activeVideoForDelete.url) {
+      console.error("No video selected for deletion");
+      return;
+    }
+
     try {
-      await deleteVideo();
+      await deleteVideo(activeVideoForDelete.url);
       setShowDropdown(null);
+      setActiveVideoForDelete(null);
+
+      // Refresh the video list
       const fetchedVideos = await fetchVideos();
       setVideos(fetchedVideos);
     } catch (error) {
@@ -134,8 +153,15 @@ const VideoLibrary = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        !Object.values(buttonRefs.current).some(
+          (ref) => ref && ref.contains(event.target)
+        )
+      ) {
         setShowDropdown(null);
+        setActiveVideoForDelete(null);
       }
     };
 
@@ -147,6 +173,7 @@ const VideoLibrary = () => {
       document.addEventListener("mousedown", handleClickOutside);
       window.addEventListener("scroll", handleScroll);
     }
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener("scroll", handleScroll);
@@ -248,7 +275,9 @@ const VideoLibrary = () => {
                           ref={(el) => (buttonRefs.current[video.id] = el)}
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => handleMoreClick(video.id, e)}
+                          onClick={(e) =>
+                            handleMoreClick(video.id, e, video.videoUrl)
+                          }
                         >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
@@ -286,7 +315,9 @@ const VideoLibrary = () => {
                           ref={(el) => (buttonRefs.current[video.id] = el)}
                           variant="ghost"
                           size="icon"
-                          onClick={(e) => handleMoreClick(video.id, e)}
+                          onClick={(e) =>
+                            handleMoreClick(video.id, e, video.videoUrl)
+                          }
                         >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
@@ -308,7 +339,7 @@ const VideoLibrary = () => {
         <DropdownMenu
           top={dropdownPosition.top}
           left={dropdownPosition.left}
-          onDelete={handleDeleteVideo}
+          onDelete={handleDeleteClick}
           dropdownRef={dropdownRef}
         />
       )}
